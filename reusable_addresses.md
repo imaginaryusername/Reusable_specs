@@ -8,7 +8,7 @@ v0.1, with supplementary server structure outlines
 
 **Problem statement**
 
-Most of the Bitcoin Cash ecosystem today runs on payments to straight addresses that are hashes of public keys, whether in simple P2PKH or scripted P2SH. Addresses are pseudonymous, and can provide a good amount - though imperfect - level of privacy if the receiver uses a fresh address to transact every time. This, however, presents a major problem in that users have to choose major compromises between usability, privacy, security and recoverability trustlessness. 
+Most of the Bitcoin Cash ecosystem today runs on payments to straight addresses that are hashes of public keys, whether in simple P2PKH or scripted P2SH. Addresses are pseudonymous, and can provide a good amount - though imperfect - level of privacy if the receiver uses a fresh address to transact every time. This, however, presents a major problem in that users have to choose major compromises between usability, privacy, security, recoverability and trustlessness. 
 
 This draft reusable address format, if widely adopted, seeks to provide a major improvement over existing systems in terms of net gain in all four areas, as well as more flexibility in choosing desirable compromises depending on usecases under one common format.
 
