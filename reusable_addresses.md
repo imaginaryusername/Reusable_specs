@@ -32,7 +32,7 @@ In light of the complications associated with the currently-used systems above, 
 
 However, introducing a third party to relay degrades both security and trustlessness. The third party can relay false addresses to senders, resulting in theft, and a service that serves a large number of clients can also be hacked, resulting in massive loss of service and money. Furthermore, privacy is always trusted to the server, and existing solutions generally rely on DNS as an identifier to senders, making it difficult for recipients who wish to remain trustlessly private to run their own servers. As time goes on, we can expect such services to concentrate in fewer and fewer hands, where their trusted nature will increase the attack surfaces for both security and privacy even if the operators remain well-intented.
 
-***BIP-47 Payment codes**
+***BIP-47 Payment codes***
 
 [BIP47](https://github.com/bitcoin/bips/blob/master/bip-0047.mediawiki), proposed by Justus Ranvier, is a radically different divergence from the traditional recipient-hand-address-to-sender model. Rather, recipients publish a single public key any sender can read, and the sender then first publishes a "notification" that tells you recipient of his own public key, either through sending to a public notification address or through offchain channels, followed by an actual funding transaction whose receiving address was derived via Diffie-Hellman to be only identifiable by the sender and recipient. If used in an ideal setup, it theoretically offers great improvements at all fronts: Usability is improved due to the use of single identifiers, privacy is great among repeat transacting parties, security is not compromised, and recoverability from seed is possible in the case of public notification. 
 
