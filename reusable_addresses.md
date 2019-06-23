@@ -220,11 +220,13 @@ The scanning and filtering part shall work exactly like in P2PKH. Once the multi
 
 **Expiration time**
 
-A suffixed, non-delegating stealth wallet as described above, as long as it does not delegate scanning to a full node, will require a fixed fraction of total bitcoin cash bandwidth to run. While the consumption does not have to be latency sensitive in the context of a light wallet, it is vulnerable to long term total traffic fluctuation. If the suffix is too short while network traffic gets much higher, the wallet might have difficulty running as bandwidth requirement rises with network traffic. On the other hand, if the suffix is too long when network traffic is low, the wallet's privacy is degraded as its anonymity set shrinks.
+Whether it uses onchain direct sending or offchain communications, as long as the wallet remains compatible with seed recovery via recovery servers, it will require a fixed fraction of total bitcoin cash bandwidth for that purpose. While the consumption does not have to be latency sensitive in the context of a light wallet, it is vulnerable to long term total traffic fluctuation. If the suffix is too short while network traffic gets much higher, the wallet might have difficulty running as bandwidth requirement rises with network traffic. On the other hand, if the suffix is too long when network traffic is low, the wallet's privacy is degraded as its anonymity set shrinks.
 
 In order to mitigate this, an optional expiry time can be added; sending wallets shall respect the expiry time by yielding an error if attempting to send past it - any funds that are sent overriding the expiry is considered lost, and the recipient has done due diligience warning sender in the paycode. 
 
 When scanning, nodes or wallets can allow for a certain amount of buffer beyond the expiry date, in case a transaction is sent before but remain unconfirmed beyond the expiry - in the context of BCH, a week might be more than sufficient.
+
+In addition to addressing scaling concerns, expiration also addresses another usecase complaints - that wallets once established will have to monitor addresses indefinitely, and there's no clear indicator to a sender whether an address remains usable or not. Such a clear guide embedded in the address itself can serve these cases well and provide unambiguous dates beyond which recipient will be free from the burden of keeping monitor and keys.
 
 **Considerations**
 
