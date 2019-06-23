@@ -10,7 +10,7 @@ v0.1, with supplementary server structure outlines
 
 Most of the Bitcoin Cash ecosystem today runs on payments to straight addresses that are hashes of public keys, whether in simple P2PKH or scripted P2SH. Addresses are pseudonymous, and can provide a good amount - though imperfect - level of privacy if the receiver uses a fresh address to transact every time. This, however, presents a major problem in that users have to choose major compromises between usability, privacy, security, recoverability and trustlessness. 
 
-This draft reusable address format, if widely adopted, seeks to provide a major improvement over existing systems in terms of net gain in all four areas, as well as more flexibility in choosing desirable compromises depending on usecases under one common format.
+This draft reusable address format, if widely adopted, seeks to provide a major improvement over existing systems in terms of net gain in all five areas, as well as more flexibility in choosing desirable compromises depending on usecases under one common format.
 
 **Existing payment systems both in use and theoretical**
 
@@ -34,7 +34,7 @@ However, introducing a third party to relay degrades both security and trustless
 
 ***BIP-47 Payment codes***
 
-[BIP47](https://github.com/bitcoin/bips/blob/master/bip-0047.mediawiki), proposed by Justus Ranvier, is a radically different divergence from the traditional recipient-hand-address-to-sender model. Rather, recipients publish a single public key any sender can read, and the sender then first publishes a "notification" that tells you recipient of his own public key, either through sending to a public notification address or through offchain channels, followed by an actual funding transaction whose receiving address was derived via Diffie-Hellman to be only identifiable by the sender and recipient. If used in an ideal setup, it theoretically offers great improvements at all fronts: Usability is improved due to the use of single identifiers, privacy is great among repeat transacting parties, security is not compromised, and recoverability from seed is possible in the case of public notification. 
+[BIP47](https://github.com/bitcoin/bips/blob/master/bip-0047.mediawiki), proposed by Justus Ranvier, is a radical divergence from the traditional recipient-hand-address-to-sender model. Rather, recipients publish a single public key any sender can read, and the sender then first publishes a "notification" that tells you recipient of his own public key, either through sending to a public notification address or through offchain channels, followed by an actual funding transaction whose receiving address was derived via Diffie-Hellman to be only identifiable by the sender and recipient. If used in an ideal setup, it theoretically offers great improvements at all fronts: Usability is improved due to the use of single identifiers, privacy is great among repeat transacting parties, security is not compromised, and recoverability from seed is possible in the case of public notification. 
 
 When weighed against real life usecases and wallets, BIP47 does, however, present several challenges:
 
@@ -184,7 +184,7 @@ There are two methods of receiving: ***Offchain communications***, which saves o
 
 2. ***Ephemeral Relay servers***: This type of server can be freely signed up using only public keys as identity, authenticating using signed messages as seen in CashID, and can employ only basic rate controls against clients as seen in Cashshuffle servers and remain largely permissionless. Simplistically relays encrypted messages from one pubkey identity to another. We can start with one central relay server, and gradually expand to multiple federated servers that share communications - a discovery mechanism should be in place similar to other decentralized applications. Does not store information for any significant lengths of time, stateless, and mostly consume only bandwidth. See relay_server.md for specifications. 
 
-3. ***Retention servers***: This type of server retains transaction information for offline clients, and can be permissioned while allowing significant innovation and profit models at scale. Entrusted with client scankeys, retention servers connect to relay servers for their clients, then retrieve, decrypt and broadcasts transactions for them. They are also responsible for retaining txid information for easy retrieval when client reconnects. An example that takes advantage of Cashaccounts can be found at cashaccounts_retention.md.
+3. ***Retention servers***: This type of server retains transaction information for offline clients, and can be permissioned while allowing significant innovation and profit models at scale. Entrusted with client scankeys, retention servers connect to relay servers for their clients, then retrieve, decrypt and broadcasts transactions for them. They are also responsible for retaining txid information for easy retrieval when client reconnects. Operators of Retention Servers can be expected to also operate their own Ephemeral Relays federated with other operators. An example that takes advantage of Cashaccounts can be found at cashaccounts_retention.md.
 
 **Sending: Onchain direct sending**
 
