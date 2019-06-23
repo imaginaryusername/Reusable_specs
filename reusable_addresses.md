@@ -198,7 +198,7 @@ To remain trustless against the possibility of relay or retention servers denyin
 
 **Receiving: Onchain direct**
 
-If onchain direct sending is used, receiving is relatively straightforward. The receipient shall connect to a Recovery Server and attempt to download all transactions that match his payment code's suffix since he was last online. This will cost bandwidth that is at most 1/256 of downloading the full blockchain (in the case suffix length = 1 byte), and more if longer suffix length is specified. 
+If onchain direct sending is used, receiving is relatively straightforward. The receipient shall connect to a Recovery Server and attempt to download all transactions that match his payment code's suffix since he was last online. This will cost bandwidth that is at most 1/256 of downloading the full blockchain (in the case suffix length = 1 byte), and less if longer suffix length is specified. 
 
 Upon receiving subscribed transactions, the wallet can then attempt, for each transaction, to derive common secret c from scan_privkey, outpoint spent by the first input and the first public key from the first input of each suffixed transaction. Discard transactions where addresses do not match R' = R + cG, in a similar fashion as two-key BIP-Stealth. This step can also be performed by specialized, trusted recovery servers entrusted with scan keys. 
 
