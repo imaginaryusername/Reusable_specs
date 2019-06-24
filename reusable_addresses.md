@@ -8,7 +8,7 @@ v0.1, with supplementary server structure outlines
 
 **Problem statement**
 
-Most of the Bitcoin Cash ecosystem today runs on payments to straight addresses that are hashes of public keys, whether in simple P2PKH or scripted P2SH. Addresses are pseudonymous, and can provide a good - though imperfect - level of privacy if the receiver uses a fresh address to transact every time. This, however, presents a major problem in that users have to choose major compromises between usability, privacy, security, recoverability and trustlessness.
+Most of the Bitcoin Cash ecosystem today runs on payments to straight addresses that are hashes of public keys, whether in simple P2PKH or scripted P2SH. Addresses are pseudonymous, and can provide a good - though imperfect - level of privacy if the receiver uses a fresh address to transact every time. This, however, presents a major problem in that users have to make major compromises between usability, privacy, security, recoverability and trustlessness.
 
 This draft reusable address format, if widely adopted, seeks to provide a major improvement over existing systems in terms of net gain in all five areas, as well as more flexibility in choosing desirable compromises depending on usecases under one common format.
 
@@ -24,13 +24,13 @@ However, this method delivers a considerable compromise in usability: For it to 
 
 Widely used in donation usecases, single-address recipients provide high transparency and easy usability: The recipient does not have to be online to receive funds. It is also very easily represented by consumer-friendly handles due to one-to-one mappability, as currently implemented by [CashAccounts](https://gitlab.com/cash-accounts/specification).
 
-While it provides good usability, security and recoverability, single-address use is terrible in privacy, as one published address allows every person who has ever transacted with the recipient to know all of her other transactions. As privacy often also implicates real life safety, this is highly undesirable in the quest to improve usability.
+While it provides good usability, security and recoverability, single-address use is terrible in privacy, as one published address allows every person who is aware of her ownership of the address to know all of her other transactions. As privacy often also implicates real life safety, this is highly undesirable in the quest to improve usability.
 
 ***Trusted relaying intermediaries***
 
 In light of the complications associated with the currently used systems above, some solutions such as OpenCAP and HandCash seek to provide intermediate, always-online services that simply relay HD addresses to senders. This solves quite a few problems: Usability can be improved because the server is always online, hence easier to find via lookups from static handles; privacy is theoretically as good as HD wallets as long as one trusts the servers; and recoverability is the same as any seed-based solution.
 
-However, introducing a third party to relay degrades both security and trustlessness. The third party can relay false addresses to senders, resulting in theft, and a service that serves a large number of clients can also be hacked, resulting in massive loss of service and money. Furthermore, privacy is always trusted to the server, and existing solutions generally rely on DNS as an identifier to senders, making it difficult for recipients who wish to remain trustlessly private to run their own servers. As time goes on, we can expect such services to concentrate in fewer and fewer hands, where their trusted nature will increase the attack surfaces for both security and privacy even if the operators remain well-intented.
+However, introducing a third party to relay degrades both security and trustlessness. The third party can relay false addresses to senders, resulting in theft, and a service that serves a large number of clients can also be hacked, resulting in massive loss of service and money. Furthermore, privacy is always trusted to the server, and existing solutions generally rely on DNS as an identifier to senders, making it difficult for recipients who wish to remain trustlessly private to run their own servers. As time goes on, we can expect such services to concentrate in fewer and fewer hands, where their trusted nature will increase the attack surfaces for both security and privacy even if the operators' intentions remain good.
 
 ***BIP-47 Payment codes***
 
@@ -38,7 +38,7 @@ However, introducing a third party to relay degrades both security and trustless
 
 When weighed against real life usecases and wallets, BIP47 does, however, present several challenges:
 
-1. One has to choose either degraded privacy or degraded recoverability. If notification is public, its privacy is degraded for a majority of transactions. Most bitcoin transactions are between parties who interact for the first time; recurring transactions are rare, and may remain so for a long time until worldwide adoption - a public notification allows for trivial timing correlation of transactions, narrowing down possible transactions for any given recipient to a trivially small subset. If one opts for offchain notification, and if the recipient loses backup of the public key notifications - typically harder to store and remain secure than seed words - then funds for the wallet may not be recoverable.
+1. One has to choose either degraded privacy or degraded recoverability. In the case of public notifications, privacy is degraded for a majority of transactions. Most bitcoin transactions are between parties who interact for the first time; recurring transactions are rare, and may remain so for a long time until worldwide adoption - a public notification allows for trivial timing correlation of transactions, narrowing down possible transactions for any given recipient to a trivially small subset. If one opts for offchain notification, and if the recipient loses their backup of any public key notifications - typically harder to store and keep secure than seed words - then funds for the wallet may not be recoverable.
 
 2. Implementation is complicated: If notification is onchain, a given wallet has to send two transactions to a first time recipient, and possibly obfuscate timing if one wants to have any semblance of privacy. This greatly complicates implementation difficulty, and creates additional problems in optimizing user experience, not to mention creating a disincentive to use such a system due to additional transaction fees. Offchain notifications lessen the burden, but then raise other questions in terms of recoverability (see above) as well as spam control.
 
@@ -58,7 +58,7 @@ However, BIP-Stealth is still not ideal for several reasons:
 
 Usability and implementation ease: One single specification, two ways to transact - with the offchain method sharing a common gateway format for senders to minimize wallet burden while maximizing flexibility on receiving side.
 
-Funds sent in one transaction - no setup. Possible second clawback transaction if not acknowledged in case of offchain method.
+Funds sent in one transaction: No setup. Possible second clawback transaction if offchain notification is not acknowledged.
 
 Privacy: Transaction indistinguishable from "normal" p2pkh/p2sh-multisig transactions, and has anonymity sets approximating a fraction of all transactions defined by the specified suffix.
 
@@ -82,7 +82,7 @@ For a recipient who intends to receive to a p2pkh address, encode the following 
 | 1 | suffix_size | uint8 | length of the filtering suffix desired in bytes; 0 if no-filter for full-node or offline-communications |
 | 32 | scan_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
 | 32 | spend_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
-| 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for never |
+| 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry |
 | 4 | checksum | char | last four bytes of SHA256 of all the preceding bytes. Intended for error-checking. |
 
 For a recipient who intends to receive to a p2sh-multisig address, encode the following in bech32 using the same character set as cashaddr:
@@ -97,7 +97,7 @@ For a recipient who intends to receive to a p2sh-multisig address, encode the fo
 | 32 | spend_pubkey2 | char | Second ECDSA/Schnorr public key of the recipients |
 | ... | ... | ... | ... |
 | 32 | spend_pubkeyn | char | nth ECDSA/Schnorr public key of the recipients |
-| 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for never |
+| 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry |
 | 4 | checksum | char | last four bytes of SHA256 of all the preceding bytes. Intended for error-checking. |
 
 The payment code shall be prefixed with `paycode:`, and can be suffixed with offchain communications networks it supports in URI, e.g. `?xmpp=johndoe@something.org&matrix=@john123:something.com`. If no additional suffix is detected, the default offchain relay method is Ephemeral Relay service (see below).
@@ -226,7 +226,7 @@ In order to mitigate this, an optional expiry time can be added; sending wallets
 
 When scanning, nodes or wallets can allow for a certain amount of buffer beyond the expiry date, in case a transaction is sent before but remains unconfirmed beyond the expiry - in the context of BCH, a week might be more than sufficient.
 
-In addition to addressing scaling concerns, expiration also addresses another usecase complaint - that wallets once established will have to monitor addresses indefinitely, and that there is no clear indicator to a sender whether an address remains usable or not. Such a clear guide embedded in the address itself can serve these cases well and provide unambiguous dates beyond which recipient will be free from the burden of keeping monitor and keys.
+In addition to addressing scaling concerns, expiration also addresses another usecase complaint - that wallets once established will have to monitor addresses indefinitely, and that there is no clear indicator to a sender whether an address remains usable or not. Such a clear guide embedded in the address itself can serve these cases well and provide unambiguous dates beyond which recipient will be free from the burden of maintaining monitoring and keys.
 
 **Considerations**
 
