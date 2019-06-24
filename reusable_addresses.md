@@ -79,7 +79,7 @@ For a recipient who intends to receive to a p2pkh address, encode the following 
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
 | 1 | version | uint8 | paycode version byte; 1 and 2 for p2pkh, 2 for to force offline-communication only. |
-| 1 | suffix_size | uint8 | length of the filtering suffix desired in bytes; 0 if no-filter for full-node or offline-communications |
+| 1 | suffix_size | uint8 | length of the filtering suffix desired in bits; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 32 | scan_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
 | 32 | spend_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
 | 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry |
@@ -90,7 +90,7 @@ For a recipient who intends to receive to a p2sh-multisig address, encode the fo
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
 | 1 | version | uint8 | paycode version byte; 3 and 4 for p2sh-multisig. 4 to force offline-communication only. |
-| 1 | suffix_size | uint8 | length of the filtering suffix desired in bytes; 0 if no-filter for full-node or offline-communications |
+| 1 | suffix_size | uint8 | length of the filtering suffix desired in bits; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 4 bits | multisig_setup_m | uint4 | instruction on constructing the multisig m-of-n to be paid to. m parties who can recover funds. m > 1, m <= n |
 | 4 bits | multisig_setup_n | uint4 | instruction on constructing the multisig m-of-n to be paid to. n parties total. n > 1, m <= n |
 | 32 | scan_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
@@ -145,7 +145,7 @@ Pay to address from key R' = R + cG
 
 To recap, we use the first pubkey with a valid signature of the transaction's first input, together with the scan key, to derive a shared secret via Diffie-Hellman. This shared secret is combined with the outpoint to obtain a unique scalar value for this payment that is used to tweak the spend key into a unique ephemeral key.
 
-And then, use different nonces to sign the first input until the last suffix_size bytes of the signature are shared with the scan_pubkey (skip if suffix_size = 0). The payment transaction is then constructed and ready to be relayed.
+And then, use different nonces to sign the first input until the last suffix_size bits of the signature are shared with the scan_pubkey (skip if suffix_size = 0). The payment transaction is then constructed and ready to be relayed.
 
 **Generating a transaction to payment code (P2SH-Multisig)**
 
@@ -175,7 +175,7 @@ Common secret c = H(H(eQ) + s) = H(H(dP) + s)
 
 Pay to a new P2SH address constructed from keys R1' = R1 + cG, R2' = R2 + cG and R3' = R3 + cG, with m of n specified in OP_CHECKMULTISIG script.
 
-Like the case of sending to P2PKH, the sender uses different nonces to sign the first input until the last suffix_size bytes of the signature are shared with the scan_pubkey (skip if suffix_size = 0). The payment transaction is then constructed and ready to be relayed.
+Like the case of sending to P2PKH, the sender uses different nonces to sign the first input until the last suffix_size bits of the signature are shared with the scan_pubkey (skip if suffix_size = 0). The payment transaction is then constructed and ready to be relayed.
 
 **Relaying: Infrastructure needed**
 
@@ -199,7 +199,7 @@ To remain trustless against the possibility of relay or retention servers denyin
 
 **Receiving: Onchain direct**
 
-If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions that match his payment code's suffix since he was last online. This will cost bandwidth that is at most 1/256 of downloading the full blockchain (in the case suffix length = 1 byte), and less if longer suffix length is specified.
+If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions that match his payment code's suffix since he was last online. This will cost bandwidth that is at most 1/256 of downloading the full blockchain (in the case suffix length = 8 bits; recovery servers may choose to deny excessively short suffix lengths), and less if longer suffix length is specified.
 
 Upon receiving subscribed transactions, the wallet can then attempt, for each transaction, to derive common secret c from scan_privkey, outpoint spent by the first input and the first public key from the first input of each suffixed transaction. Discard transactions where addresses do not match R' = R + cG, in a similar fashion as two-key BIP-Stealth. This step can also be performed by specialized, trusted recovery servers entrusted with scan keys.
 
@@ -231,4 +231,4 @@ In addition to addressing scaling concerns, expiration also addresses another us
 
 **Considerations**
 
-Anonymity set for suffix_size 0 is effectively all transactions with p2pkh outputs (TBD p2sh-multisig); with suffix_size > 0, it is reduced by a factor of 1/(256)^(suffix_size) at each step.
+Anonymity set for suffix_size 0 is effectively all transactions with p2pkh outputs (TBD p2sh-multisig); with suffix_size > 0, it is reduced by a factor of 1/2^(suffix_size) at each step.

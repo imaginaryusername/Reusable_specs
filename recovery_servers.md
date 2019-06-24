@@ -6,8 +6,8 @@ Client request:
 
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
-| 1 | suffix_size | uint8 | length of the filtering suffix desired in bytes; 0 if no-filter |
-| variable | suffix | char | exact suffix used to filter transactions |
+| 1 | suffix_size | uint8 | length of the filtering suffix desired in bits; 0 if no-filter |
+| variable | suffix | char | exact suffix used to filter transactions; pad with zero to whole bytes if suffix_size is not in steps of 8 |
 | 4 | start time | uint32 | Beginning UNIX time of the period of transactions the client wishes to examine |
 | 4 | end time | uint32 | End UNIX time of the period of transactions the client wishes to examine | 
 
