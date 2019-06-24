@@ -70,7 +70,7 @@ Usability: Can receive to P2PKH or P2SH-multisig addresses, with payment codes a
 
 Security: None of the servers, even "trusted" retention servers, have the ability to redirect or steal funds. The worst they can do is denial of service.
 
-Optional retirement: Ability for addresses to "expire" and adjust resource usage after a long period. Also useful for addresses where the recipient intends to stop monitoring after a period of time for other reasons.
+Optional retirement: Ability for addresses to "renew" by expiring and republishing with adjusted resource usage after some period. Also useful for addresses where the recipient intends to stop monitoring after a period of time for other reasons.
 
 **Paycode format**
 
