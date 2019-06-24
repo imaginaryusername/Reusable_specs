@@ -13,5 +13,5 @@ Client request:
 
 Server response:
 
-
+The precise response and how/whether to paginate it is yet to be determined, but the server is expected to return a list of txids that contain the requested transactions. The client can download and verify these transactions from another service like Bitcore or ElectrumX. 
 
