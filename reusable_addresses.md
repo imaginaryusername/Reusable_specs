@@ -91,7 +91,8 @@ For a recipient who intends to receive to a p2sh-multisig address, encode the fo
 | -----------|:-----------:| ----------:|---------:|
 | 1 | version | uint8 | paycode version byte; 2 for p2sh-multisig. Set the first bit to 1 to indicate offline-communication only. |
 | 1 | suffix_size | uint8 | length of the filtering suffix desired in bytes; 0 if no-filter for full-node or offline-communications |
-| 1 | multisig_setup | uint8 | instruction on constructing the multisig m-of-n to be paid to. first four bits indicate m parties who can recover funds, while last four bits indicate n parties total. Neither can be zero, m <= n. |
+| 4 bits | multisig_setup_m | uint4 | instruction on constructing the multisig m-of-n to be paid to. m parties who can recover funds. m > 1, m <= n |
+| 4 bits | multisig_setup_n | uint4 | instruction on constructing the multisig m-of-n to be paid to. n parties total. n > 1, m <= n |
 | 32 | scan_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
 | 32 | spend_pubkey1 | char | First ECDSA/Schnorr public key of the recipients |
 | 32 | spend_pubkey2 | char | Second ECDSA/Schnorr public key of the recipients |
