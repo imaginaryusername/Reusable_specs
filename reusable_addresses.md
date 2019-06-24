@@ -78,7 +78,7 @@ For a recipient who intends to receive to a p2pkh address, encode the following 
 
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
-| 1 | version | uint8 | paycode version byte; 1 for p2pkh. Set the first bit to 1 to indicate offline-communication only. |
+| 1 | version | uint8 | paycode version byte; 1 and 2 for p2pkh, 2 for to force offline-communication only. |
 | 1 | suffix_size | uint8 | length of the filtering suffix desired in bytes; 0 if no-filter for full-node or offline-communications |
 | 32 | scan_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
 | 32 | spend_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
@@ -89,7 +89,7 @@ For a recipient who intends to receive to a p2sh-multisig address, encode the fo
 
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
-| 1 | version | uint8 | paycode version byte; 2 for p2sh-multisig. Set the first bit to 1 to indicate offline-communication only. |
+| 1 | version | uint8 | paycode version byte; 3 and 4 for p2sh-multisig. 4 to force offline-communication only. |
 | 1 | suffix_size | uint8 | length of the filtering suffix desired in bytes; 0 if no-filter for full-node or offline-communications |
 | 4 bits | multisig_setup_m | uint4 | instruction on constructing the multisig m-of-n to be paid to. m parties who can recover funds. m > 1, m <= n |
 | 4 bits | multisig_setup_n | uint4 | instruction on constructing the multisig m-of-n to be paid to. n parties total. n > 1, m <= n |
@@ -189,11 +189,11 @@ There are two methods of receiving: ***Offchain communications***, which saves o
 
 **Sending: Onchain direct sending**
 
-After a transaction is generated, if the sending wallet detects the first bit of the version byte is zero, it can simply broadcast the transaction to the Bitcoin Cash network and let it be mined. No notification to the recipient is needed.
+After a transaction is generated, if the sending wallet detects the version allows onchain direct sending, it can simply broadcast the transaction to the Bitcoin Cash network and let it be mined. No notification to the recipient is needed.
 
 **Sending: Offchain communications**
 
-If the paycode specifies offchain communications via setting the first bit to 1 and does not specify additional relay methods, the sending wallet shall attempt to relay through Ephemeral Relay servers. The constructed transaction shall first be encrypted with the payment code's scan pubkey, then handed off to a relay server. The transaction is considered "Sent" when the sending wallet detects the same transaction being broadcasted by the retention server.
+If the paycode specifies offchain communications via setting the version byte and does not specify additional relay methods, the sending wallet shall attempt to relay through Ephemeral Relay servers. The constructed transaction shall first be encrypted with the payment code's scan pubkey, then handed off to a relay server. The transaction is considered "Sent" when the sending wallet detects the same transaction being broadcasted by the retention server.
 
 To remain trustless against the possibility of relay or retention servers denying service, after a short timeout (e.g. 30 seconds), if the transaction is not detected, the sending wallet shall consider the broadcast failed and construct a "clawback" transaction that spends the same output to a new address she controls. This is to avoid the case where the trade is voided - recipient never sends goods or services to the sender - yet after some time the recipient broadcasts the transaction anyway, robbing the sender.
 
