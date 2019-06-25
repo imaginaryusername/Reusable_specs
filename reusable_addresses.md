@@ -231,4 +231,8 @@ In addition to addressing scaling concerns, expiration also addresses another us
 
 **Considerations**
 
-Anonymity set for suffix_size 0 is effectively all transactions with p2pkh outputs (TBD p2sh-multisig); with suffix_size > 0, it is reduced by a factor of 1/2^(suffix_size) at each step.
+***Anonymity set*** Anonymity set for suffix_size 0 is effectively all transactions with p2pkh outputs (TBD p2sh-multisig); with suffix_size > 0, it is reduced by a factor of 1/2^(suffix_size) at each step.
+
+***Upper limit of scalability at recovery*** At very large blocksizes, the maximum suffix length permitted by the spec is 4 bytes, or about a 1/4-billion filter; for a Terabyte sized blocks, this will mean the client needs to examine on average 36kB of data per day of recovery. Unless the disparity between client and server technologies change radically, this should be adequate for the forseeable future.
+
+***Compatibility with coinjoin-based technologies*** While incoming addresses are only determined upon sending, coinjoin technologies such as Cashshuffle are quite agnostic to how receiving addresses are generated. The more important aspects of these technologies are that 1) addresses are not reused and 2) a ready list of change addresses can be generated from the same seed or master private key, both of which are compatible. Incoming coins can be marked for joins as they are received or recovered just as they can on HD addresses.
