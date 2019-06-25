@@ -81,7 +81,7 @@ For a recipient who intends to receive to a p2pkh address, encode the following 
 | 1 | version | uint8 | paycode version byte; 1 and 2 for p2pkh, 2 to force offline-communication only. |
 | 1 | suffix_size | uint8 | length of the filtering suffix desired in bits; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 32 | scan_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
-| 32 | spend_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
+| 32 | spend_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive payto address when combined with common secret |
 | 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry |
 | 4 | checksum | char | last four bytes of SHA256 of all the preceding bytes. Intended for error-checking. |
 
