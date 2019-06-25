@@ -52,7 +52,7 @@ However, BIP-Stealth is still not ideal for several reasons:
 
 2. Incompatible with other OP_RETURN protocols: While this may be addressed in a future change in standardness rules, right now Bitcoin Cash only allows one OP_RETURN output per transaction. Embedding notifications inside OP_RETURN prevents the transaction from carrying other protocols such as Simple Ledger or CashIntents, limiting extensibility of the stealth transactions.
 
-3. Flexibility in scaling: While BIP_Stealth does provide some flexibility in anonymity sets via adjusting prefix lengths, it does not provide means for low-bandwidth/trusted-privacy alternatives in offchain notification, nor does it provide for an expiry notice for clients who might want to update the address for scalability or privacy reasons periodically.
+3. Flexibility in scaling: While BIP-Stealth does provide some flexibility in anonymity sets via adjusting prefix lengths, it does not provide means for low-bandwidth/trusted-privacy alternatives in offchain notification, nor does it provide for an expiry notice for clients who might want to update the address for scalability or privacy reasons periodically.
 
 **Highlights of features in this proposal**
 
@@ -78,7 +78,7 @@ For a recipient who intends to receive to a p2pkh address, encode the following 
 
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
-| 1 | version | uint8 | paycode version byte; 1 and 2 for p2pkh, 2 for to force offline-communication only. |
+| 1 | version | uint8 | paycode version byte; 1 and 2 for p2pkh, 2 to force offline-communication only. |
 | 1 | suffix_size | uint8 | length of the filtering suffix desired in bits; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 32 | scan_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
 | 32 | spend_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
@@ -193,7 +193,7 @@ After a transaction is generated, if the sending wallet detects the version allo
 
 **Sending: Offchain communications**
 
-If the paycode specifies offchain communications via setting the version byte and does not specify additional relay methods, the sending wallet shall attempt to relay through Ephemeral Relay servers. The constructed transaction shall first be encrypted with the payment code's scan pubkey, then handed off to a relay server. The transaction is considered "Sent" when the sending wallet detects the same transaction being broadcasted by the retention server.
+If the paycode specifies offchain communications via setting the version byte and does not specify additional relay methods, the sending wallet shall attempt to relay through Ephemeral Relay servers. The constructed transaction shall first be encrypted with the payment code's scan pubkey, then handed off to a relay server. The transaction is considered "Sent" when the sending wallet detects the same transaction being broadcasted by a retention server.
 
 To remain trustless against the possibility of relay or retention servers denying service, after a short timeout (e.g. 30 seconds), if the transaction is not detected, the sending wallet shall consider the broadcast failed and construct a "clawback" transaction that spends the same output to a new address she controls. This is to avoid the case where the trade is voided - recipient never sends goods or services to the sender - yet after some time the recipient broadcasts the transaction anyway, robbing the sender.
 
@@ -221,7 +221,7 @@ The scanning and filtering part shall work exactly like in P2PKH. Once the multi
 
 **Expiration time**
 
-Whether it uses onchain direct sending or offchain communications, as long as the wallet remains compatible with seed recovery via recovery servers, it will require a fixed fraction of total bitcoin cash bandwidth for that purpose. While the consumption does not have to be latency sensitive in the context of a light wallet, it is vulnerable to long term total traffic fluctuation. If the suffix is too short while network traffic gets much higher, the wallet might have difficulty running as bandwidth requirement rises with network traffic. On the other hand, if the suffix is too long when network traffic is low, the wallet's privacy is degraded as its anonymity set shrinks.
+Whether it uses onchain direct sending or offchain communications, as long as the wallet remains compatible with seed recovery via recovery servers, it will require a fixed fraction of total Bitcoin Cash bandwidth for that purpose. While the consumption does not have to be latency sensitive in the context of a light wallet, it is vulnerable to long term total traffic fluctuation. If the suffix is too short while network traffic gets much higher, the wallet might have difficulty running as bandwidth requirement rises with network traffic. On the other hand, if the suffix is too long when network traffic is low, the wallet's privacy is degraded as its anonymity set shrinks.
 
 In order to mitigate this, an optional expiry time can be added; sending wallets shall respect the expiry time by yielding an error if attempting to send past it - any funds that are sent overriding the expiry is considered lost, and the recipient has done due diligence warning the sender in the paycode.
 
