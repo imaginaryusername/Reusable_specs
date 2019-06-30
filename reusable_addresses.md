@@ -2,15 +2,39 @@
 
 BIP-???
 
-v0.1, with supplementary server structure outlines
+v0.2, with supplementary server structure outlines
 
-@im_uname, with material from Mark Lundeberg, discussion with Chris Pacia, Shammah Chancellor and Jonathan Silverblood.
+@im_uname, with material from Mark Lundeberg, plus discussion with Chris Pacia, Amaury Séchet, Shammah Chancellor and Jonathan Silverblood. Additional editing from freetrader and emergent_reasons.
 
 **Problem statement**
 
 Most of the Bitcoin Cash ecosystem today runs on payments to straight addresses that are hashes of public keys, whether in simple P2PKH or scripted P2SH. Addresses are pseudonymous, and can provide a good - though imperfect - level of privacy if the receiver uses a fresh address to transact every time. This, however, presents a major problem in that users have to make major compromises between usability, privacy, security, recoverability and trustlessness.
 
 This draft reusable address format, if widely adopted, seeks to provide a major improvement over existing systems in terms of net gain in all five areas, as well as more flexibility in choosing desirable compromises depending on usecases under one common format.
+
+**Requirements**
+
+1. From only the paycode, sender can generate addresses that are detectable and spendable by the recipient.
+
+2. Multiple payto addresses can be generated to a single recipient from a single notification, so amount can be obfuscated.
+
+3. The sender can generate the recoverable payto address relevant to his payment, but cannot otherwise compromise the privacy or fund security of the recipient by deriving any of his private keys.
+
+4. The transactions should have a reasonable anonymity set, where the recipient's transactions are not easily isolated on the blockchain.
+
+5. The receiver must be able to separate the keys used to generate and detect addresses from the keys used to spend (which can be offline), so to separate the privacy and security aspects.
+
+6. To remain light wallet compatible, the system must be able to reduce the number of transactions for the recipient to detect to a subset of all transactions, even at higher total transaction throughputs.
+
+7. The transaction and notification must be self-contained, no additional transaction is needed to send a payment.
+
+8. There must exist a practical way for the recipient to recover his funds from mnemonic seed backups without compromising security or privacy.
+
+9. Multisignature addresses must be supported for both sender and recipient. 
+
+10. Inputs and outputs can be in any order, so trustless coin mixing can be accommodated. 
+
+11. Compatible with other OP_RETURN protocols, which form an important part of the Bitcoin Cash ecosystem. Incompatibility may lead to low adoption or fragmented anonymity sets.
 
 **Existing payment systems both in use and theoretical**
 
