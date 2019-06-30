@@ -36,6 +36,8 @@ This draft reusable address format, if widely adopted, seeks to provide a major 
 
 11. Compatible with other OP_RETURN protocols, which form an important part of the Bitcoin Cash ecosystem. Incompatibility may lead to low adoption or fragmented anonymity sets.
 
+12. For offline notification methods, the intermediary servers must not be able to compromise security of funds. 
+
 **Existing payment systems both in use and theoretical**
 
 ***Simple HD wallets***
@@ -80,21 +82,27 @@ However, BIP-Stealth is still not ideal for several reasons:
 
 **Highlights of features in this proposal**
 
-Usability and implementation ease: One single specification, two ways to transact - with the offchain method sharing a common gateway format for senders to minimize wallet burden while maximizing flexibility on receiving side.
+Usability: Sender does not require any additional information aside from the paycode. (REQ-1)
 
-Funds sent in one transaction: No setup. Possible second clawback transaction if offchain notification is not acknowledged.
+Usability and implementation ease: One single specification, two ways to transact - with the offchain method sharing a common gateway format for senders to minimize wallet burden, while maximizing flexibility on receiving side allowing them to entrust privacy to intermediaries. (REQ-5)
 
-Privacy: Transaction indistinguishable from "normal" p2pkh/p2sh-multisig transactions, and has anonymity sets approximating a fraction of all transactions defined by the specified suffix.
+Funds sent in one transaction: No setup. Possible second clawback transaction if offchain notification is not acknowledged. (REQ-7)
 
-Recoverability: Funds in the entire wallet recoverable by only seed phrases, with the help of a recovery server that does not have to compromise privacy.
+Privacy: Transaction indistinguishable from "normal" p2pkh/p2sh-multisig transactions, and has anonymity sets approximating a fraction of all transactions defined by the specified suffix. Sender does not know other transactions sent to the recipient. (REQ-3,4)
 
-Usability: Can receive from P2PKH or P2SH-multisig addresses, covering the vast majority of usecases. Theoretically possible to receive from any P2SH script with a pubkey and signature, but might result in wallet implementation complications.
+Privacy: For transactions with multiple inputs and outputs, it will be unclear to an observer which input is intended to be used for filtering as well as which output(s) are intended for the recipient (REQ-2,10)
 
-Usability: Can receive to P2PKH or P2SH-multisig addresses, with payment codes adjusted accordingly.
+Recoverability: Funds in the entire wallet recoverable by only seed phrases, with the help of a recovery server that does not have to compromise privacy. (REQ-8,6)
 
-Security: None of the servers, even "trusted" retention servers, have the ability to redirect or steal funds. The worst they can do is denial of service.
+Usability: Can receive from P2PKH or P2SH-multisig addresses, covering the vast majority of usecases. Theoretically possible to receive from any P2SH script with a pubkey and signature, but might result in wallet implementation complications. (REQ-9)
 
-Optional retirement: Ability for addresses to "renew" by expiring and republishing with adjusted resource usage after some period. Also useful for addresses where the recipient intends to stop monitoring after a period of time for other reasons.
+Usability: Can receive to P2PKH or P2SH-multisig addresses, with payment codes adjusted accordingly. (Req 9)
+
+Usability: Compatible with OP_RETURN protocols such as Simple Ledger Protocol, CashIntents or OMNI without adjusting current network protocol. (REQ-11)
+
+Security: None of the servers, even "trusted" retention servers, have the ability to redirect or steal funds. The worst they can do is denial of service. (REQ-12)
+
+Optional retirement: Ability for addresses to "renew" by expiring and republishing with adjusted resource usage after some period. Also useful for addresses where the recipient intends to stop monitoring after a period of time for other reasons. (REQ-6 related)
 
 **Paycode format**
 
