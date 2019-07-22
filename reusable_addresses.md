@@ -138,6 +138,7 @@ The payment code shall be prefixed with `paycode:`, and can be optionally suffix
 **Private key format**
 
 For the easy facilitation of paper wallets and inter-wallet transfers, the scan private key shall begin with "rpriv", the spend pubkey "spriv", followed each by these fields encoded in base32 using the same character set as cashaddr: 
+
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
 | 1 | version | uint8 | paycode version byte |
