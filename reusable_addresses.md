@@ -26,7 +26,7 @@ This draft reusable address format, if widely adopted, seeks to provide a major 
 
 6. To remain light wallet compatible, the system must be able to reduce the number of transactions for the recipient to detect to a subset of all transactions, even at higher total transaction throughputs.
 
-7. The transaction and notification must be self-contained, no additional transaction is needed to send a payment, no additional data other than the transaction itself is needed to receive and spend it.
+7. The transaction and notification must be self-contained, no additional transaction is needed to send a payment, no additional data other than the transaction itself is needed to receive and spend it. Derived addresses do not need to continue to be monitored after a transaction is detected.
 
 8. There must exist a practical way for the recipient to recover his funds from mnemonic seed backups without compromising security or privacy.
 
@@ -278,7 +278,7 @@ In addition to addressing scaling concerns, expiration also addresses another us
 
 ***Anonymity set*** Anonymity set for suffix_size 0 is effectively all transactions with p2pkh outputs (TBD p2sh-multisig); with suffix_size > 0, it is reduced by a factor of 1/2^(suffix_size) at each step for the simplest case where all transactions have only one input. The set may be larger where transactions contain more inputs.
 
-***Upper limit of scalability at recovery*** At very large blocksizes, the maximum suffix length permitted by the spec is 4 bytes, or about a 1/4-billion filter; for a Terabyte sized blocks, this will mean the client needs to examine on average 36kB of data per day of recovery. Unless the disparity between client and server technologies change radically, this should be adequate for the forseeable future.
+***Upper limit of scalability at recovery*** At very large blocksizes, the maximum suffix length permitted by the spec is 4 bytes, or about a 1/4-billion filter; for a Terabyte sized blocks, this will mean the client needs to examine about 36kB of data per day of recovery in the minimum case, more for average number of inputs per transaction above 1. Unless the disparity between client and server technologies change radically, this should be adequate for the forseeable future.
 
 ***DoS via multiple inputs*** Since one transaction can map to multiple suffixes via its multiple inputs, it would seem possible to increase download burden for onchain direct users, as well as offchain users recovering from seed, by posting very large transactions with many inputs each with different suffixes. However, such a scheme will at most be able to amplify the attack of a 100kB transaction against 600 suffixes, which is likely insufficient to be a serious concern for most situations.
 
