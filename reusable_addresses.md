@@ -2,7 +2,7 @@
 
 BIP-???
 
-v0.2, with supplementary server structure outlines
+v0.3, with additional key formats, relaxed input positions
 
 @im_uname, with material from Mark Lundeberg, plus discussion with Chris Pacia, Amaury Séchet, Shammah Chancellor and Jonathan Silverblood. Additional editing from freetrader and emergent_reasons.
 
@@ -26,13 +26,13 @@ This draft reusable address format, if widely adopted, seeks to provide a major 
 
 6. To remain light wallet compatible, the system must be able to reduce the number of transactions for the recipient to detect to a subset of all transactions, even at higher total transaction throughputs.
 
-7. The transaction and notification must be self-contained, no additional transaction is needed to send a payment.
+7. The transaction and notification must be self-contained, no additional transaction is needed to send a payment, no additional data other than the transaction itself is needed to receive and spend it.
 
 8. There must exist a practical way for the recipient to recover his funds from mnemonic seed backups without compromising security or privacy.
 
 9. Multisignature addresses must be supported for both sender and recipient. 
 
-10. Inputs and outputs can be in any order, so trustless coin mixing can be accommodated. 
+10. Inputs and outputs can be in any order, so trustless coin mixing can be flexibly accommodated. 
 
 11. Compatible with other OP_RETURN protocols, which form an important part of the Bitcoin Cash ecosystem. Incompatibility may lead to low adoption or fragmented anonymity sets.
 
@@ -106,18 +106,18 @@ Optional retirement: Ability for addresses to "renew" by expiring and republishi
 
 **Paycode format**
 
-For a recipient who intends to receive to a p2pkh address, encode the following in bech32 using the same character set as cashaddr:
+For a recipient who intends to receive to a p2pkh addresses, encode the following in base32 using the same character set as cashaddr:
 
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
 | 1 | version | uint8 | paycode version byte; 1 and 2 for p2pkh, 2 to force offline-communication only. |
 | 1 | suffix_size | uint8 | length of the filtering suffix desired in bits; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
-| 32 | scan_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
-| 32 | spend_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive payto address when combined with common secret |
+| 33 | scan_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive common secret |
+| 33 | spend_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive payto addresses when combined with common secret |
 | 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry |
-| 4 | checksum | char | last four bytes of SHA256 of all the preceding bytes. Intended for error-checking. |
+| 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
-For a recipient who intends to receive to a p2sh-multisig address, encode the following in bech32 using the same character set as cashaddr:
+For a recipient who intends to receive to a p2sh-multisig addresses, encode the following in base32 using the same character set as cashaddr:
 
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
@@ -125,21 +125,31 @@ For a recipient who intends to receive to a p2sh-multisig address, encode the fo
 | 1 | suffix_size | uint8 | length of the filtering suffix desired in bits; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 4 bits | multisig_setup_m | uint4 | instruction on constructing the multisig m-of-n to be paid to. m parties who can recover funds. m > 1, m <= n |
 | 4 bits | multisig_setup_n | uint4 | instruction on constructing the multisig m-of-n to be paid to. n parties total. n > 1, m <= n |
-| 32 | scan_pubkey | char | ECDSA/Schnorr public key of the recipient used to derive common secret |
-| 32 | spend_pubkey1 | char | First ECDSA/Schnorr public key of the recipients |
-| 32 | spend_pubkey2 | char | Second ECDSA/Schnorr public key of the recipients |
+| 33 | scan_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive common secret |
+| 33 | spend_pubkey1 | char | First ECDSA/Schnorr public key of the recipients |
+| 33 | spend_pubkey2 | char | Second ECDSA/Schnorr public key of the recipients |
 | ... | ... | ... | ... |
-| 32 | spend_pubkeyn | char | nth ECDSA/Schnorr public key of the recipients |
+| 33 | spend_pubkeyn | char | nth ECDSA/Schnorr public key of the recipients |
 | 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry |
-| 4 | checksum | char | last four bytes of SHA256 of all the preceding bytes. Intended for error-checking. |
+| 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
-The payment code shall be prefixed with `paycode:`, and can be suffixed with offchain communications networks it supports in URI, e.g. `?xmpp=johndoe@something.org&matrix=@john123:something.com`. If no additional suffix is detected, the default offchain relay method is Ephemeral Relay service (see below).
+The payment code shall be prefixed with `paycode:`, and can be optionally suffixed with offchain communications networks it supports in URI, e.g. `?xmpp=johndoe@something.org&matrix=@john123:something.com`. If no additional suffix is detected, the default offchain relay method, a necessity for version 2 and 4, is Ephemeral Relay service (see below).
+
+**Private key format**
+
+For the easy facilitation of paper wallets and inter-wallet transfers, the scan private key shall begin with "rpriv", the spend pubkey "spriv", followed each by these fields encoded in base32 using the same character set as cashaddr: 
+| Field Size | Description | Data Type  | Comments |
+| -----------|:-----------:| ----------:|---------:|
+| 1 | version | uint8 | paycode version byte |
+| 1 | multisig_setup | uint4 + uint4 | instruction on constructing multig m-of-n (see above). 0 on both if P2PKH |
+| 33 | privkey | char | 256-bit ECDSA/Schnorr private key |
+| 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
 **Paycode creation from two keypairs (P2PKH)**
 
 Obtain two ECDSA/Schnorr keypairs from a wallet, and designate one as the "scanning" pubkey and the other as the "spending" pubkey.
 
-Any common-secret-derived keypairs detected are additionally stored in the wallet file for history and spending, to minimize future bandwidth and CPU usage.
+Any common-secret-derived keypairs detected from incoming payments are additionally stored in the wallet file for history and spending, to minimize future bandwidth and CPU usage. Historical receive addresses do not need to be continuously monitored after first receipt. 
 
 **Paycode creation (P2SH-multisig)**
 
@@ -149,9 +159,9 @@ The multisig m-of-n parties do not keep transaction scanning privacy from each o
 
 Sender's wallet shall first check the expiry time embedded in the paycode is at least one week ahead of local clock (skip if expiry time is 0). If expiry time is more than a week ahead, proceed.
 
-Sender's wallet shall determine the outpoints she wants to spend from, and determine which input is at position 0.
+Sender's wallet shall determine the outpoints she wants to spend from, and determine which input's public key  is to be used for deriving common secret. For a multi-input transaction whether from single or multiple senders, that designated input should be randomly determined. Note that multiple recipients can be included in a single transaction, and each recipient address are free to either be derived from public keys in different designated inputs or the same input.
 
-In the case of paying from P2PKH, P below is simply the public key of the first input. In the case of paying from P2SH-multisig, it is the first public key with a valid signature.
+In the case the designated input is P2PKH, P below is simply its embedded public key. In the case of designating P2SH-multisig, it is the first public key with a valid signature within that input.
 
 A common secret c can be derived as follows:
 
@@ -169,19 +179,19 @@ R = fG
 
 P = eG = first public key embedded in input 0 with a valid signature
 
-s = integer derived from outpoint spent by first input
+s = integer derived from outpoint spent by designated input
 
-Common secret c = H(H(eQ) + s) = H(H(dP) + s)
+Common secret c = H(H(eQ) + s) = H(H(dP) + s), where H() is SHA256.
 
-Pay to address from key R' = R + cG
+Pay to addresses derived from public keys R'<sub>i</sub> = CKDpub(R,c,i), where CKDpub(K,C,i) is the public parent key -> public child key [derivation](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Public_parent_key_rarr_public_child_key) from BIP32, with the i<sup>th</sup> public key being the i<sup>th</sup> K, starting from i = 0.
 
-To recap, we use the first pubkey with a valid signature of the transaction's first input, together with the scan key, to derive a shared secret via Diffie-Hellman. This shared secret is combined with the outpoint to obtain a unique scalar value for this payment that is used to tweak the spend key into a unique ephemeral key.
+To recap, we use the first pubkey with a valid signature of the transaction's designated input, together with the scan key, to derive a shared secret via Diffie-Hellman. This shared secret is combined with the outpoint to obtain a unique scalar value for this payment that is used to tweak the spend key into unique ephemeral keys that is then used to derive addresses.
 
-And then, use different nonces to sign the first input until the last suffix_size bits of the signature are shared with the scan_pubkey (skip if suffix_size = 0). The payment transaction is then constructed and ready to be relayed.
+And then, use different nonces to sign the designated input until the last suffix_size bits of the signature are shared with the scan_pubkey (skip if suffix_size = 0). The payment transaction is then constructed and ready to be relayed.
 
 **Generating a transaction to payment code (P2SH-Multisig)**
 
-In the case of paying from P2PKH, P below is also the public key of the first input. In the case of paying from P2SH-multisig, it is the first public key with a valid signature.
+In the case of paying from P2PKH, P below is also the public key of the designated input. In the case of paying from P2SH-multisig, it is the first public key with a valid signature.
 
 The different part is all of the spending public keys will have to be involved in constructing a new P2SH address, described below in paying to a two-of-three P2SH-multisig setup:
 
@@ -205,9 +215,9 @@ s = integer derived from outpoint spent by first input
 
 Common secret c = H(H(eQ) + s) = H(H(dP) + s)
 
-Pay to a new P2SH address constructed from keys R1' = R1 + cG, R2' = R2 + cG and R3' = R3 + cG, with m of n specified in OP_CHECKMULTISIG script.
+Pay to new P2SH addresses constructed from keys R1'<sub>i</sub> = CKDpub(R1,c,i), R2'<sub>i</sub> = CKDpub(R2,c,i) and R3'<sub>i</sub> = CKDpub(R3,c,i), with m of n specified in OP_CHECKMULTISIG script.
 
-Like the case of sending to P2PKH, the sender uses different nonces to sign the first input until the last suffix_size bits of the signature are shared with the scan_pubkey (skip if suffix_size = 0). The payment transaction is then constructed and ready to be relayed.
+Like the case of sending to P2PKH, the sender uses different nonces to sign the designated input until the last suffix_size bits of the signature are shared with the scan_pubkey (skip if suffix_size = 0). The payment transaction is then constructed and ready to be relayed.
 
 **Relaying: Infrastructure needed**
 
@@ -231,11 +241,11 @@ To remain trustless against the possibility of relay or retention servers denyin
 
 **Receiving: Onchain direct**
 
-If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions that match his payment code's suffix since he was last online. This will cost bandwidth that is at most 1/256 of downloading the full blockchain (in the case suffix length = 8 bits; recovery servers may choose to deny excessively short suffix lengths), and less if longer suffix length is specified.
+If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions where at least one of the qualifying inputs (P2PKH or P2SH-multisig) has signature that match his payment code's suffix since he was last online. This will cost bandwidth that is approximately 1/256 of downloading the full blockchain (in the case suffix length = 8 bits; recovery servers may choose to deny excessively short suffix lengths), and less if longer suffix length is specified.
 
-Upon receiving subscribed transactions, the wallet can then attempt, for each transaction, to derive common secret c from scan_privkey, outpoint spent by the first input and the first public key from the first input of each suffixed transaction. Discard transactions where addresses do not match R' = R + cG, in a similar fashion as two-key BIP-Stealth. This step can also be performed by specialized, trusted recovery servers entrusted with scan keys.
+Upon receiving subscribed transactions, the wallet can then attempt, for each transaction, to derive common secret c from scan_privkey, outpoint spent by the first input and the first public key from the first input of each suffixed transaction. Discard transactions where output addresses do not match R'<sub>0</sub> = CKDpub(R,cG,0). If an addresses R'<sub>0</sub> is found, another address R'<sub>1</sub> is derived and attempted to match available outputs, until no more addresses can be found for a given i. This step can also be performed by specialized, trusted recovery servers entrusted with scan keys.
 
-Upon obtaining transactions filtered by the scan_privkey, the receiving wallet then stores it locally and assign a spending keypair R' and h = (f+c) to it. Funds are now available to be spent.
+Upon obtaining transactions filtered by the scan_privkey, the receiving wallet then stores it locally and assign a spending keypairs R'<sub>i</sub> and h<sub>i</sub> = [CKDpriv](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Private_parent_key_rarr_private_child_key)(f,c,i) to it. Funds are now available to be spent.
 
 **Receiving: Offchain communications**
 
@@ -249,7 +259,7 @@ Depending on the specific setup, if a client suspects either server downtime, ma
 
 **Receiving to P2SH-Multisig**
 
-The scanning and filtering part shall work exactly like in P2PKH. Once the multisig parties have a filtered transaction ascertained by the scan_privkey, the receiving parties can then each assign public keys R1', R2'... and private keys f1+c, f2+c...to them. With these keysets, the address can be spent from normally.
+The scanning and filtering part shall work exactly like in P2PKH. Once the multisig parties have a filtered transaction ascertained by the scan_privkey, the receiving parties can then each assign public keys R1'<sub>i</sub>, R2'<sub>i</sub>... and private keys CKDpriv(f1,c,i), CKDpriv(f2,c,i)...to the i<sup>th</sup> outputs. With these keysets, the address can be spent from normally.
 
 **Expiration time**
 
@@ -263,8 +273,13 @@ In addition to addressing scaling concerns, expiration also addresses another us
 
 **Considerations**
 
-***Anonymity set*** Anonymity set for suffix_size 0 is effectively all transactions with p2pkh outputs (TBD p2sh-multisig); with suffix_size > 0, it is reduced by a factor of 1/2^(suffix_size) at each step.
+***Limits of party combination*** The design allows multiparty inputs and multiparty payouts, with each recipient party capable of deriving multiple addresses for maximum privacy. However, the number of recipient parties must never exceed the number of inputs in any given transaction; i.e. if you intend to pay to three independent parties, you must provide the transaction with at least three inputs, so each can provide for a filter suffix and public key for one of your recipients.
+
+***Anonymity set*** Anonymity set for suffix_size 0 is effectively all transactions with p2pkh outputs (TBD p2sh-multisig); with suffix_size > 0, it is reduced by a factor of 1/2^(suffix_size) at each step for the simplest case where all transactions have only one input. The set may be larger where transactions contain more inputs.
 
 ***Upper limit of scalability at recovery*** At very large blocksizes, the maximum suffix length permitted by the spec is 4 bytes, or about a 1/4-billion filter; for a Terabyte sized blocks, this will mean the client needs to examine on average 36kB of data per day of recovery. Unless the disparity between client and server technologies change radically, this should be adequate for the forseeable future.
 
+***DoS via multiple inputs*** Since one transaction can map to multiple suffixes via its multiple inputs, it would seem possible to increase download burden for onchain direct users, as well as offchain users recovering from seed, by posting very large transactions with many inputs each with different suffixes. However, such a scheme will at most be able to amplify the attack of a 100kB transaction against 600 suffixes, which is likely insufficient to be a serious concern for most situations.
+
 ***Compatibility with coinjoin-based technologies*** While incoming addresses are only determined upon sending, coinjoin technologies such as Cashshuffle are quite agnostic to how receiving addresses are generated. The more important aspects of these technologies are that 1) addresses are not reused and 2) a ready list of change addresses can be generated from the same seed or master private key, both of which are compatible. Incoming coins can be marked for joins as they are received or recovered just as they can on HD addresses.
+
