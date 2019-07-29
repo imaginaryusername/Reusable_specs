@@ -100,7 +100,7 @@ Usability: Can receive to P2PKH or P2SH-multisig addresses, with payment codes a
 
 Usability: Compatible with OP_RETURN protocols such as Simple Ledger Protocol, CashIntents or OMNI without adjusting current network protocol. (REQ-11)
 
-Security: None of the servers, even "trusted" retention servers, have the ability to redirect or steal funds. The worst they can do is denial of service. (REQ-12)
+Security: None of the servers, even "trusted" retention servers, have the ability to redirect or steal funds. The worst they can do is denial of service, which can be circumvented by falling back to recovery servers. (REQ-12)
 
 Optional retirement: Ability for addresses to "renew" by expiring and republishing with adjusted resource usage after some period. Also useful for addresses where the recipient intends to stop monitoring after a period of time for other reasons. (REQ-6 related)
 
