@@ -222,7 +222,7 @@ Like the case of sending to P2PKH, the sender uses different nonces to sign the 
 
 **Relaying: Infrastructure needed**
 
-There are two methods of receiving: ***Offchain communications***, which saves on bandwidth but entrusts privacy to relay and retention servers, and ***onchain direct sending***, which is trustless on privacy but requires more bandwidth. We will describe three types of servers needed:
+There are two methods of receiving: ***Offchain communications***, which saves on bandwidth but entrusts privacy to relay and retention servers, and ***onchain direct sending***, which is trustless on privacy but requires more bandwidth. We describe a single type of server required for both types, as well as two additional types required to make use of the offchain communications method:
 
 1. ***Recovery servers***: In case of onchain direct sending, only this type of server is needed. The server shall index all transactions that have P2PKH or P2SH-multisig inputs by the last bytes of their first signatures at all qualifying inputs, and return all transactions matching requested signature suffixes to a client. Required for security anyway in the case of offchain communications. See recovery_server.md for specifications.
 
@@ -234,12 +234,6 @@ There are two methods of receiving: ***Offchain communications***, which saves o
 
 After a transaction is generated, if the sending wallet detects the version allows onchain direct sending, it can simply broadcast the transaction to the Bitcoin Cash network and let it be mined. No notification to the recipient is needed.
 
-**Sending: Offchain communications**
-
-If the paycode specifies offchain communications via setting the version byte and does not specify additional relay methods, the sending wallet shall attempt to relay through Ephemeral Relay servers. The constructed transaction shall first be encrypted with the payment code's scan pubkey, using a common ECDSA-based scheme such as [electrum-ECIES](https://github.com/Electron-Cash/Electron-Cash/blob/master/lib/bitcoin.py#L690), then handed off to a relay server. The transaction is considered "Sent" when the sending wallet detects the same transaction being broadcasted by a retention server.
-
-To remain trustless against the possibility of relay or retention servers denying service, after a short timeout (e.g. 30 seconds), if the transaction is not detected, the sending wallet shall consider the broadcast failed and construct a "clawback" transaction that spends the same output to a new address she controls. This is to avoid the case where the trade is voided - recipient never sends goods or services to the sender - yet after some time the recipient broadcasts the transaction anyway, robbing the sender.
-
 **Receiving: Onchain direct**
 
 If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions where at least one of the qualifying inputs (P2PKH or P2SH-multisig) has signature that match his payment code's suffix since he was last online. This will cost bandwidth that is approximately 1/256 of downloading the full blockchain (in the case suffix length = 8 bits; recovery servers may choose to deny excessively short suffix lengths), and less if longer suffix length is specified.
@@ -247,6 +241,12 @@ If onchain direct sending is used, receiving is relatively straightforward. The 
 Upon receiving subscribed transactions, the wallet can then attempt, for each input where signature suffix matches its paycode, to derive common secret c from scan_privkey, outpoint spent by that input and the first public key embedded in each input with a matching signature suffix. If no output addresses match R'<sub>0</sub> = CKDpub(R,cG,0), move on to another matching input; if no inputs are left in the transaction, discard the transaction. If an addresses R'<sub>0</sub> is found, another address R'<sub>1</sub> is derived from that input and attempted to match available outputs, until no more addresses can be found for a given i. This step can also be performed by specialized, trusted servers entrusted with scan privkeys.
 
 Upon obtaining transactions filtered by the scan_privkey, the receiving wallet then stores it locally and assign a spending keypairs R'<sub>i</sub> and h<sub>i</sub> = [CKDpriv](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Private_parent_key_rarr_private_child_key)(f,c,i) to it. Funds are now available to be spent.
+
+**Sending: Offchain communications**
+
+If the paycode specifies offchain communications via setting the version byte and does not specify additional relay methods, the sending wallet shall attempt to relay through Ephemeral Relay servers. The constructed transaction shall first be encrypted with the payment code's scan pubkey, using a common ECDSA-based scheme such as [electrum-ECIES](https://github.com/Electron-Cash/Electron-Cash/blob/master/lib/bitcoin.py#L690), then handed off to a relay server. The transaction is considered "Sent" when the sending wallet detects the same transaction being broadcasted by a retention server.
+
+To remain trustless against the possibility of relay or retention servers denying service, after a short timeout (e.g. 30 seconds), if the transaction is not detected, the sending wallet shall consider the broadcast failed and construct a "clawback" transaction that spends the same output to a new address she controls. This is to avoid the case where the trade is voided - recipient never sends goods or services to the sender - yet after some time the recipient broadcasts the transaction anyway, robbing the sender.
 
 **Receiving: Offchain communications**
 
