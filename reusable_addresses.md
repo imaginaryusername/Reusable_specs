@@ -150,8 +150,6 @@ For the easy facilitation of paper wallets and inter-wallet transfers, the scan 
 
 Obtain two ECDSA/Schnorr keypairs from a wallet, and designate one as the "scanning" pubkey and the other as the "spending" pubkey.
 
-For a wallet adhering to BIP44 standard of m/purpose'/coin'/account'/change/index, constant 0 is typically used for "external" chain and 1 for "internal" at the "change" position. One SHOULD additionally use 2 for scan_key and 3 for spend_key at "change" for the same wallet, and start at 0 for index; scan_key and spend_key of the same index numbers SHOULD be paired in generating reusable paycodes. To minimize monitoring load, reusable paycodes that has not been explicitly generated SHOULD not be monitored for receives. 
-
 Any common-secret-derived keypairs detected from incoming payments are additionally stored in the wallet file for history and spending, to minimize future bandwidth and CPU usage. Historical receive addresses do not need to be continuously monitored after first receipt. 
 
 **Paycode creation (P2SH-multisig)**
