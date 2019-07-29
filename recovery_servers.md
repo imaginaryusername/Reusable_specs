@@ -4,9 +4,11 @@ This is a stub for the specs of communication protocol needed for the proposed R
 
 Method ideas:
 
-**version: Simple version handshake. Client sends a version request with his own desired version, server returns with two values: min_version and max_version, which indicates features it supports. 
+**version** 
 
-**get_history:
+Simple version handshake. Client sends a version request with his own desired version, server returns with two values: min_version and max_version, which indicates features it supports. 
+
+**get_history**
 
 Client requests: 
 
@@ -23,7 +25,7 @@ Otherwise server first returns an estimated size of transactions (or txids, if c
 
 Flag can be used to request utxo (returns only unspent) and/or compact (returns txid instead of whole transactions).
 
-**subscribe: 
+**subscribe**
 
 Client request: 
 
@@ -39,13 +41,19 @@ Flag can be used to request compact (returns txid instead of whole transactions)
 
 -- optional --
 
-**get_peers: get a list of known server peers (host/ports) along with their min_version and max_versions. Useful for federation. 
+**get_peers** 
 
-**add_peer: A server announces its existence to other servers along with its min/max versions, which indicates features it support. Useful for federation. Peers may periodically check each other for integrity using minimal get_history. 
+get a list of known server peers (host/ports) along with their min_version and max_versions. Useful for federation. 
 
-**paid_history: 
+**add_peer** 
+
+A server announces its existence to other servers along with its min/max versions, which indicates features it support. Useful for federation. Peers may periodically check each other for integrity using minimal get_history. 
+
+**paid_history** 
+
 Like get_history, but server returns a paycode and amount along with the size estimate. Instead of a simple acknowledgement, client returns a transaction, which the server parses and broadcasts before serving data. Returns error if payment invalid or insufficient.
 
-**paid_subscribe:
+**paid_subscribe**
+
 Like subscribe, but with an additional handshake of paycode and amount. Client returns a transaction as in paid_history before the monitoring service is activated
 
