@@ -2,9 +2,9 @@
 
 BIP-???
 
-v0.3, with additional key formats, relaxed input positions
+v0.4, with change from signature to input hash for filtering suffix
 
-@im_uname, with material from Mark Lundeberg, plus discussion with Chris Pacia, Amaury Séchet, Shammah Chancellor and Jonathan Silverblood. Additional editing from freetrader and emergent_reasons.
+@im_uname, with material from Mark Lundeberg, plus discussion with Chris Pacia, Amaury Séchet, Shammah Chancellor, Jonathan Silverblood and Josh Ellithorpe. Additional editing from freetrader and emergent_reasons.
 
 **Problem statement**
 
@@ -178,7 +178,7 @@ Q = dG
 
 R = fG
 
-P = eG = first public key embedded in input 0 with a valid signature
+P = eG = first public key embedded in designated input with a valid signature
 
 s = integer derived from outpoint spent by designated input
 
@@ -188,7 +188,7 @@ Pay to addresses derived from public keys R'<sub>i</sub> = CKDpub(R,c,i), where 
 
 To recap, we use the first pubkey with a valid signature of the transaction's designated input, together with the scan key, to derive a shared secret via Diffie-Hellman. This shared secret is combined with the outpoint to obtain a unique scalar value for this payment that is used to tweak the spend key into unique ephemeral keys that is then used to derive addresses.
 
-And then, use different nonces to sign the designated input until the last suffix_size bits of the signature are shared with the scan_pubkey (skip if suffix_size = 0). The payment transaction is then constructed and ready to be relayed.
+And then, use different nonces to sign the designated input until the last suffix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if suffix_size = 0). "Input" is a combination of the outpoint and scriptsig. The payment transaction is then constructed and ready to be relayed.
 
 **Generating a transaction to payment code (P2SH-Multisig)**
 
@@ -210,7 +210,7 @@ Q = dG
 
 R1 = f1G, ...
 
-P = eG = first public key embedded in input 0 with a valid signature
+P = eG = first public key embedded in designated input with a valid signature
 
 s = integer derived from outpoint spent by first input
 
@@ -218,17 +218,17 @@ Common secret c = H(H(eQ) + s) = H(H(dP) + s)
 
 Pay to new P2SH addresses constructed from keys R1'<sub>i</sub> = CKDpub(R1,c,i), R2'<sub>i</sub> = CKDpub(R2,c,i) and R3'<sub>i</sub> = CKDpub(R3,c,i), with m of n specified in OP_CHECKMULTISIG script.
 
-Like the case of sending to P2PKH, the sender uses different nonces to sign the designated input until the last suffix_size bits of the signature are shared with the scan_pubkey (skip if suffix_size = 0). The payment transaction is then constructed and ready to be relayed.
+Like the case of sending to P2PKH, the sender uses different nonces to sign the designated input until the last suffix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if suffix_size = 0). The payment transaction is then constructed and ready to be relayed.
 
 **Relaying: Infrastructure needed**
 
 There are two methods of receiving: ***Offchain communications***, which saves on bandwidth but entrusts privacy to relay and retention servers, and ***onchain direct sending***, which is trustless on privacy but requires more bandwidth. We describe a single type of server required for both types, as well as two additional types required to make use of the offchain communications method:
 
-1. ***Recovery servers***: In case of onchain direct sending, only this type of server is needed. The server shall index all transactions that have P2PKH or P2SH-multisig inputs by the last bytes of their first signatures at all qualifying inputs, and return all transactions matching requested signature suffixes to a client. Required for security anyway in the case of offchain communications. See recovery_server.md for specifications.
+1. ***Recovery servers***: In case of onchain direct sending, only this type of server is needed. The server shall index all transactions that have P2PKH or P2SH-multisig inputs by the last bytes of the double-sha256 at all qualifying inputs, and return all transactions matching requested input double-sha256 suffixes to a client. Required for security anyway in the case of offchain communications. See recovery_server.md for specifications.
 
-2. ***Ephemeral Relay servers***: This type of server can be freely signed up for using only public keys as identity, authenticating using signed messages as seen in CashID, and can employ basic rate controls against clients as seen in CashShuffle servers and remain largely permissionless. Simplistically relays encrypted messages from one pubkey identity to another. We can start with one central relay server, and gradually expand to multiple federated servers that share communications - a discovery mechanism should be in place similar to other decentralized applications. Does not store information for any significant lengths of time, stateless, and mostly consumes only bandwidth. See relay_server.md for specifications.
+2. ***Ephemeral Relay servers***: (Optional) This type of server can be freely signed up for using only public keys as identity, authenticating using signed messages as seen in CashID, and can employ basic rate controls against clients as seen in CashShuffle servers and remain largely permissionless. Simplistically relays encrypted messages from one pubkey identity to another. We can start with one central relay server, and gradually expand to multiple federated servers that share communications - a discovery mechanism should be in place similar to other decentralized applications. Does not store information for any significant lengths of time, stateless, and mostly consumes only bandwidth. See relay_server.md for specifications.
 
-3. ***Retention servers***: This type of server retains transaction information for offline clients, and can be permissioned while allowing significant innovation and profit models at scale. Entrusted with client scan keys, retention servers connect to relay servers for their clients, then retrieve, decrypt and broadcast transactions for them. They are also responsible for retaining txid information for easy retrieval when client reconnects. Operators of Retention Servers can be expected to also operate their own Ephemeral Relays federated with other operators. An example that takes advantage of CashAccounts can be found at cashaccounts_retention.md.
+3. ***Retention servers***: (Optional) This type of server retains transaction information for offline clients, and can be permissioned while allowing significant innovation and profit models at scale. Entrusted with client scan keys, retention servers connect to relay servers for their clients, then retrieve, decrypt and broadcast transactions for them. They are also responsible for retaining txid information for easy retrieval when client reconnects. Operators of Retention Servers can be expected to also operate their own Ephemeral Relays federated with other operators. An example that takes advantage of CashAccounts can be found at cashaccounts_retention.md.
 
 **Sending: Onchain direct sending**
 
@@ -236,21 +236,21 @@ After a transaction is generated, if the sending wallet detects the version allo
 
 **Receiving: Onchain direct**
 
-If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions where at least one of the qualifying inputs (P2PKH or P2SH-multisig) has signature that match his payment code's suffix since he was last online. This will cost bandwidth that is approximately 1/256 of downloading the full blockchain (in the case suffix length = 8 bits; recovery servers may choose to deny excessively short suffix lengths), and less if longer suffix length is specified.
+If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions where at least one of the inputs has double-sha256 that match his payment code's suffix since he was last online. This will cost bandwidth that is approximately 1/256 of downloading the full blockchain (in the case suffix length = 8 bits; recovery servers may choose to deny excessively short suffix lengths), and less if longer suffix length is specified.
 
-Upon receiving subscribed transactions, the wallet can then attempt, for each input where signature suffix matches its paycode, to derive common secret c from scan_privkey, outpoint spent by that input and the first public key embedded in each input with a matching signature suffix. If no output addresses match R'<sub>0</sub> = CKDpub(R,cG,0), move on to another matching input; if no inputs are left in the transaction, discard the transaction. If an addresses R'<sub>0</sub> is found, another address R'<sub>1</sub> is derived from that input and attempted to match available outputs, until no more addresses can be found for a given i. This step can also be performed by specialized, trusted servers entrusted with scan privkeys.
+Upon receiving subscribed transactions, the wallet can then attempt, for each input where double-sha256 suffix matches its paycode and is one of the qualifying type (P2PKH or P2SH-multisig), to derive common secret c from scan_privkey, outpoint spent by that input and the first public key embedded in each input with a matching double-sha256 suffix. If no output addresses match R'<sub>0</sub> = CKDpub(R,cG,0), move on to another matching input; if no inputs are left in the transaction, discard the transaction. If an addresses R'<sub>0</sub> is found, another address R'<sub>1</sub> is derived from that input and attempted to match available outputs, until no more addresses can be found for a given i. This step can also be performed by specialized, trusted servers entrusted with scan privkeys.
 
 Upon obtaining transactions filtered by the scan_privkey, the receiving wallet then stores it locally and assign a spending keypairs R'<sub>i</sub> and h<sub>i</sub> = [CKDpriv](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Private_parent_key_rarr_private_child_key)(f,c,i) to it. Funds are now available to be spent.
 
 **Sending: Offchain communications**
 
-If the paycode specifies offchain communications via setting the version byte and does not specify additional relay methods, the sending wallet shall attempt to relay through Ephemeral Relay servers. The constructed transaction shall first be encrypted with the payment code's scan pubkey, using a common ECDSA-based scheme such as [electrum-ECIES](https://github.com/Electron-Cash/Electron-Cash/blob/master/lib/bitcoin.py#L690), then handed off to a relay server. The transaction is considered "Sent" when the sending wallet detects the same transaction being broadcasted by a retention server.
+(Optional) If the paycode specifies offchain communications via setting the version byte and does not specify additional relay methods, the sending wallet shall attempt to relay through Ephemeral Relay servers. The constructed transaction shall first be encrypted with the payment code's scan pubkey, using a common ECDSA-based scheme such as [electrum-ECIES](https://github.com/Electron-Cash/Electron-Cash/blob/master/lib/bitcoin.py#L690), then handed off to a relay server. The transaction is considered "Sent" when the sending wallet detects the same transaction being broadcasted by a retention server.
 
 To remain trustless against the possibility of relay or retention servers denying service, after a short timeout (e.g. 30 seconds), if the transaction is not detected, the sending wallet shall consider the broadcast failed and construct a "clawback" transaction that spends the same output to a new address she controls. This is to avoid the case where the trade is voided - recipient never sends goods or services to the sender - yet after some time the recipient broadcasts the transaction anyway, robbing the sender.
 
 **Receiving: Offchain communications**
 
-A Retention Server, subscribing to Relays using a client's scan privkey, receives the encrypted transaction, then decrypts and broadcasts to the Bitcoin Cash network; invalid transactions can be discarded. The server then proceeds to store the relevant txids calculated from the broadcasted transaction for its clients until retrieved - retention time can vary depending on provider, from several weeks to indefinite depending on specific quality of service desired.
+(Optional) A Retention Server, subscribing to Relays using a client's scan privkey, receives the encrypted transaction, then decrypts and broadcasts to the Bitcoin Cash network; invalid transactions can be discarded. The server then proceeds to store the relevant txids calculated from the broadcasted transaction for its clients until retrieved - retention time can vary depending on provider, from several weeks to indefinite depending on specific quality of service desired.
 
 Clients can log onto retention servers and retrieve their incoming txids. Depending on the level of service, the login method can be relatively permissionless (depending on CashAccounts, for example; see cashaccounts_retention.md) or permissioned in premium or other methods. Specific arrangements depend on the exact setup and can even be extended to use other communications protocols such as XMPP and Tox, to be determined by the implementing wallet.
 
@@ -273,6 +273,8 @@ When scanning, nodes or wallets can allow for a certain amount of buffer beyond 
 In addition to addressing scaling concerns, expiration also addresses another usecase complaint - that wallets once established will have to monitor addresses indefinitely, and that there is no clear indicator to a sender whether an address remains usable or not. Such a clear guide embedded in the address itself can serve these cases well and provide unambiguous dates beyond which recipient will be free from the burden of maintaining monitoring and keys.
 
 **Considerations**
+
+***Malleability considerations*** While using input hash as the filtering mechanism has advantage in both flexibility and implementation simplicity, input hashes are third-party malleable if colluded with a miner via nonstandard transactions, via exploiting vulnerabilities fixed in Bitcoin Cash's scheduled November 2019 upgrade (MINIMALDATA for P2PKH and NULLDUMMY for P2SH). Even before the fix, these DoS vectors - note that an attacker cannot steal funds - are mitigated by the fact that an attacker cannot easily pinpoint any given recipient's transaction. 
 
 ***Limits of party combination*** The design allows multiparty inputs and multiparty payouts, with each recipient party capable of deriving multiple addresses for maximum privacy. However, the number of recipient parties must never exceed the number of inputs in any given transaction; i.e. if you intend to pay to three independent parties, you must provide the transaction with at least three inputs, so each can provide for a filter suffix and public key for one of your recipients.
 

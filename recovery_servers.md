@@ -21,7 +21,7 @@ Client requests:
 
 Server rejects if version unsupported. 
 
-Otherwise server first returns an estimated size of transactions (or txids, if compact) to transmit. Client acknowledges, then between start_block and end_block inclusive, return a list of transactions with at least one qualifying input's signature matching the desired suffix string and length, each accompanied by their block number if confirmed. Returns error if rate-limited.
+Otherwise server first returns an estimated size of transactions (or txids, if compact) to transmit. Client acknowledges, then between start_block and end_block inclusive, return a list of transactions with at least one qualifying input's double sha256 hash matching the desired suffix string and length, each accompanied by their block number if confirmed. Returns error if rate-limited.
 
 Flag can be used to request utxo (returns only unspent) and/or compact (returns txid instead of whole transactions).
 
