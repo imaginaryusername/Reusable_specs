@@ -114,7 +114,7 @@ For a recipient who intends to receive to a p2pkh addresses, encode the followin
 | 1 | suffix_size | uint8 | length of the filtering suffix desired in bits; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 33 | scan_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive common secret |
 | 33 | spend_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive payto addresses when combined with common secret |
-| 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry |
+| 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry. Recommend 0 for now. |
 | 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
 For a recipient who intends to receive to a p2sh-multisig addresses, encode the following in base32 using the same character set as cashaddr:
@@ -130,7 +130,7 @@ For a recipient who intends to receive to a p2sh-multisig addresses, encode the 
 | 33 | spend_pubkey2 | char | Second ECDSA/Schnorr public key of the recipients |
 | ... | ... | ... | ... |
 | 33 | spend_pubkeyn | char | nth ECDSA/Schnorr public key of the recipients |
-| 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry |
+| 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry. Recommend 0 for now. |
 | 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
 The payment code shall be prefixed with `paycode:`, and can be optionally suffixed with offchain communications networks it supports in URI, e.g. `?xmpp=johndoe@something.org&matrix=@john123:something.com`. If no additional suffix is detected, the default offchain relay method, a necessity for version 2 and 4, is Ephemeral Relay service (see below).
@@ -150,11 +150,11 @@ For the easy facilitation of paper wallets and inter-wallet transfers, the scan 
 
 Obtain two ECDSA/Schnorr keypairs from a wallet, and designate one as the "scanning" pubkey and the other as the "spending" pubkey.
 
-Any common-secret-derived keypairs detected from incoming payments are additionally stored in the wallet file for history and spending, to minimize future bandwidth and CPU usage. Historical receive addresses do not need to be continuously monitored after first receipt. 
+Any common-secret-derived keypairs detected from incoming payments are additionally stored in the wallet file for history and spending, to minimize future bandwidth and CPU usage. Historical receive addresses do not need to be continuously monitored after first receipt. The expiry date should be set to 0 to remain disabled.
 
 **Paycode creation (P2SH-multisig)**
 
-The multisig m-of-n parties do not keep transaction scanning privacy from each other, and must agree on a common scanning keypair. They can subsequently submit one ECDSA/Schnorr spending pubkey each, and set up the paycode using the n+1 public keys.
+The multisig m-of-n parties do not keep transaction scanning privacy from each other, and must agree on a common scanning keypair. They can subsequently submit one ECDSA/Schnorr spending pubkey each, and set up the paycode using the n+1 public keys. The expiry date should be set to 0 to remain disabled.
 
 **Generating a transaction to payment code (P2PKH)**
 
@@ -263,6 +263,8 @@ Depending on the specific setup, if a client suspects either server downtime, ma
 The scanning and filtering part shall work exactly like in P2PKH. Once the multisig parties have a filtered transaction ascertained by the scan_privkey, the receiving parties can then each assign public keys R1'<sub>i</sub>, R2'<sub>i</sub>... and private keys CKDpriv(f1,c,i), CKDpriv(f2,c,i)...to the i<sup>th</sup> outputs. With these keysets, the address can be spent from normally.
 
 **Expiration time**
+
+Note: Expiry date is not expected to be relevant in the near term, so it's recommended that receiving wallets set it to zero when generating. Sending wallets are still recommended to implement it to remain compatible with possible future scalability and usability changes. 
 
 Whether it uses onchain direct sending or offchain communications, as long as the wallet remains compatible with seed recovery via recovery servers, it will require a fixed fraction of total Bitcoin Cash bandwidth for that purpose. While the consumption does not have to be latency sensitive in the context of a light wallet, it is vulnerable to long term total traffic fluctuation. If the suffix is too short while network traffic gets much higher, the wallet might have difficulty running as bandwidth requirement rises with network traffic. On the other hand, if the suffix is too long when network traffic is low, the wallet's privacy is degraded as its anonymity set shrinks.
 
