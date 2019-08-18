@@ -88,7 +88,7 @@ Usability and implementation ease: One single specification, two ways to transac
 
 Funds sent in one transaction: No setup. Possible second clawback transaction if offchain notification is not acknowledged. (REQ-7)
 
-Privacy: Transaction indistinguishable from "normal" p2pkh/p2sh-multisig transactions, and has anonymity sets approximating a fraction of all transactions defined by the specified suffix. Sender does not know other transactions sent to the recipient. (REQ-3,4)
+Privacy: Transaction indistinguishable from "normal" p2pkh/p2sh-multisig transactions, and has anonymity sets approximating a fraction of all transactions defined by the specified prefix. Sender does not know other transactions sent to the recipient. (REQ-3,4)
 
 Privacy: For transactions with multiple inputs and outputs, it will be unclear to an observer which input is intended to be used for filtering as well as which output(s) are intended for the recipient (REQ-2,10)
 
@@ -111,10 +111,10 @@ For a recipient who intends to receive to a p2pkh addresses, encode the followin
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
 | 1 | version | uint8 | paycode version byte; 1 and 2 for p2pkh, 2 to force offline-communication only. |
-| 1 | suffix_size | uint8 | length of the filtering suffix desired in bits; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
+| 1 | prefix_size | uint8 | length of the filtering prefix desired in <= 16 bits for versions 1,2,3,4; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 33 | scan_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive common secret |
 | 33 | spend_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive payto addresses when combined with common secret |
-| 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry. Recommend 0 for now. |
+| 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry. Use 0 for versions 1,2,3,4. |
 | 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
 For a recipient who intends to receive to a p2sh-multisig addresses, encode the following in base32 using the same character set as cashaddr:
@@ -122,7 +122,7 @@ For a recipient who intends to receive to a p2sh-multisig addresses, encode the 
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
 | 1 | version | uint8 | paycode version byte; 3 and 4 for p2sh-multisig. 4 to force offline-communication only. |
-| 1 | suffix_size | uint8 | length of the filtering suffix desired in bits; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
+| 1 | prefix_size | uint8 | length of the filtering prefix desired in <= 16 bits for versions 1,2,3,4; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 4 bits | multisig_setup_m | uint4 | instruction on constructing the multisig m-of-n to be paid to. m parties who can recover funds. m > 1, m <= n |
 | 4 bits | multisig_setup_n | uint4 | instruction on constructing the multisig m-of-n to be paid to. n parties total. n > 1, m <= n |
 | 33 | scan_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive common secret |
@@ -130,7 +130,7 @@ For a recipient who intends to receive to a p2sh-multisig addresses, encode the 
 | 33 | spend_pubkey2 | char | Second ECDSA/Schnorr public key of the recipients |
 | ... | ... | ... | ... |
 | 33 | spend_pubkeyn | char | nth ECDSA/Schnorr public key of the recipients |
-| 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry. Recommend 0 for now. |
+| 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry. Use 0 for versions 1,2,3,4. |
 | 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
 The payment code shall be prefixed with `paycode:`, and can be optionally suffixed with offchain communications networks it supports in URI, e.g. `?xmpp=johndoe@something.org&matrix=@john123:something.com`. If no additional suffix is detected, the default offchain relay method, a necessity for version 2 and 4, is Ephemeral Relay service (see below).
@@ -143,6 +143,7 @@ For the easy facilitation of paper wallets and inter-wallet transfers, the scan 
 | -----------|:-----------:| ----------:|---------:|
 | 1 | version | uint8 | paycode version byte |
 | 1 | multisig_setup | uint4 + uint4 | instruction on constructing multig m-of-n (see above). 0 on both if P2PKH |
+| 1 | prefix_size | uint8 | length of the filtering prefix desired in <= 16 bits for versions 1,2,3,4; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 33 | privkey | char | 256-bit ECDSA/Schnorr private key |
 | 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
@@ -188,7 +189,7 @@ Pay to addresses derived from public keys R'<sub>i</sub> = CKDpub(R,c,i), where 
 
 To recap, we use the first pubkey with a valid signature of the transaction's designated input, together with the scan key, to derive a shared secret via Diffie-Hellman. This shared secret is combined with the outpoint to obtain a unique scalar value for this payment that is used to tweak the spend key into unique ephemeral keys that is then used to derive addresses.
 
-And then, use different nonces to sign the designated input until the last suffix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if suffix_size = 0). "Input" is a combination of the outpoint and scriptsig. The payment transaction is then constructed and ready to be relayed.
+And then, use different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if prefix_size = 0). "Input" is a combination of the outpoint and scriptsig. The payment transaction is then constructed and ready to be relayed.
 
 **Generating a transaction to payment code (P2SH-Multisig)**
 
@@ -218,13 +219,13 @@ Common secret c = H(H(eQ) + s) = H(H(dP) + s)
 
 Pay to new P2SH addresses constructed from keys R1'<sub>i</sub> = CKDpub(R1,c,i), R2'<sub>i</sub> = CKDpub(R2,c,i) and R3'<sub>i</sub> = CKDpub(R3,c,i), with m of n specified in OP_CHECKMULTISIG script.
 
-Like the case of sending to P2PKH, the sender uses different nonces to sign the designated input until the last suffix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if suffix_size = 0). The payment transaction is then constructed and ready to be relayed.
+Like the case of sending to P2PKH, the sender uses different nonces to sign the designated input until the last prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if prefix_size = 0). The payment transaction is then constructed and ready to be relayed.
 
 **Relaying: Infrastructure needed**
 
 There are two methods of receiving: ***Offchain communications***, which saves on bandwidth but entrusts privacy to relay and retention servers, and ***onchain direct sending***, which is trustless on privacy but requires more bandwidth. We describe a single type of server required for both types, as well as two additional types required to make use of the offchain communications method:
 
-1. ***Recovery servers***: In case of onchain direct sending, only this type of server is needed. The server shall index all transactions that have P2PKH or P2SH-multisig inputs by the last bytes of the double-sha256 at all qualifying inputs, and return all transactions matching requested input double-sha256 suffixes to a client. Required for security anyway in the case of offchain communications. See recovery_server.md for specifications.
+1. ***Recovery servers***: In case of onchain direct sending, only this type of server is needed. The server shall index all transactions that have P2PKH or P2SH-multisig inputs by the last bytes of the double-sha256 at all qualifying inputs, and return all transactions matching requested input double-sha256 prefixes to a client. Required for security anyway in the case of offchain communications. See recovery_server.md for specifications.
 
 2. ***Ephemeral Relay servers***: (Optional) This type of server can be freely signed up for using only public keys as identity, authenticating using signed messages as seen in CashID, and can employ basic rate controls against clients as seen in CashShuffle servers and remain largely permissionless. Simplistically relays encrypted messages from one pubkey identity to another. We can start with one central relay server, and gradually expand to multiple federated servers that share communications - a discovery mechanism should be in place similar to other decentralized applications. Does not store information for any significant lengths of time, stateless, and mostly consumes only bandwidth. See relay_server.md for specifications.
 
@@ -236,9 +237,9 @@ After a transaction is generated, if the sending wallet detects the version allo
 
 **Receiving: Onchain direct**
 
-If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions where at least one of the inputs has double-sha256 that match his payment code's suffix since he was last online. This will cost bandwidth that is approximately 1/256 of downloading the full blockchain (in the case suffix length = 8 bits; recovery servers may choose to deny excessively short suffix lengths), and less if longer suffix length is specified.
+If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions where at least one of the inputs has double-sha256 that match his payment code's prefix since he was last online. This will cost bandwidth that is approximately 1/256 of downloading the full blockchain (in the case prefix length = 8 bits; recovery servers may choose to deny excessively short prefix lengths), and less if longer prefix length is specified.
 
-Upon receiving subscribed transactions, the wallet can then attempt, for each input where double-sha256 suffix matches its paycode and is one of the qualifying type (P2PKH or P2SH-multisig), to derive common secret c from scan_privkey, outpoint spent by that input and the first public key embedded in each input with a matching double-sha256 suffix. If no output addresses match R'<sub>0</sub> = CKDpub(R,cG,0), move on to another matching input; if no inputs are left in the transaction, discard the transaction. If an addresses R'<sub>0</sub> is found, another address R'<sub>1</sub> is derived from that input and attempted to match available outputs, until no more addresses can be found for a given i. This step can also be performed by specialized, trusted servers entrusted with scan privkeys.
+Upon receiving subscribed transactions, the wallet can then attempt, for each input where double-sha256 prefix matches its paycode and is one of the qualifying type (P2PKH or P2SH-multisig), to derive common secret c from scan_privkey, outpoint spent by that input and the first public key embedded in each input with a matching double-sha256 prefix. If no output addresses match R'<sub>0</sub> = CKDpub(R,cG,0), move on to another matching input; if no inputs are left in the transaction, discard the transaction. If an addresses R'<sub>0</sub> is found, another address R'<sub>1</sub> is derived from that input and attempted to match available outputs, until no more addresses can be found for a given i. This step can also be performed by specialized, trusted servers entrusted with scan privkeys.
 
 Upon obtaining transactions filtered by the scan_privkey, the receiving wallet then stores it locally and assign a spending keypairs R'<sub>i</sub> and h<sub>i</sub> = [CKDpriv](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Private_parent_key_rarr_private_child_key)(f,c,i) to it. Funds are now available to be spent.
 
@@ -266,7 +267,7 @@ The scanning and filtering part shall work exactly like in P2PKH. Once the multi
 
 Note: Expiry date is not expected to be relevant in the near term, so it's recommended that receiving wallets set it to zero when generating. Sending wallets are still recommended to implement it to remain compatible with possible future scalability and usability changes. 
 
-Whether it uses onchain direct sending or offchain communications, as long as the wallet remains compatible with seed recovery via recovery servers, it will require a fixed fraction of total Bitcoin Cash bandwidth for that purpose. While the consumption does not have to be latency sensitive in the context of a light wallet, it is vulnerable to long term total traffic fluctuation. If the suffix is too short while network traffic gets much higher, the wallet might have difficulty running as bandwidth requirement rises with network traffic. On the other hand, if the suffix is too long when network traffic is low, the wallet's privacy is degraded as its anonymity set shrinks.
+Whether it uses onchain direct sending or offchain communications, as long as the wallet remains compatible with seed recovery via recovery servers, it will require a fixed fraction of total Bitcoin Cash bandwidth for that purpose. While the consumption does not have to be latency sensitive in the context of a light wallet, it is vulnerable to long term total traffic fluctuation. If the prefix is too short while network traffic gets much higher, the wallet might have difficulty running as bandwidth requirement rises with network traffic. On the other hand, if the prefix is too long when network traffic is low, the wallet's privacy is degraded as its anonymity set shrinks, in addition to creating undue burden on sending wallets for grinding.
 
 In order to mitigate this, an optional expiry time can be added; sending wallets shall respect the expiry time by yielding an error if attempting to send past it - any funds that are sent overriding the expiry is considered lost, and the recipient has done due diligence warning the sender in the paycode.
 
@@ -278,13 +279,15 @@ In addition to addressing scaling concerns, expiration also addresses another us
 
 ***Malleability considerations*** While using input hash as the filtering mechanism has advantage in both flexibility and implementation simplicity, input hashes are third-party malleable if colluded with a miner via nonstandard transactions, via exploiting vulnerabilities fixed in Bitcoin Cash's scheduled November 2019 upgrade (MINIMALDATA for P2PKH and NULLDUMMY for P2SH). Even before the fix, these DoS vectors - note that an attacker cannot steal funds - are mitigated by the fact that an attacker cannot easily pinpoint any given recipient's transaction. 
 
-***Limits of party combination*** The design allows multiparty inputs and multiparty payouts, with each recipient party capable of deriving multiple addresses for maximum privacy. However, the number of recipient parties must never exceed the number of inputs in any given transaction; i.e. if you intend to pay to three independent parties, you must provide the transaction with at least three inputs, so each can provide for a filter suffix and public key for one of your recipients.
+***Limits of party combination*** The design allows multiparty inputs and multiparty payouts, with each recipient party capable of deriving multiple addresses for maximum privacy. However, the number of recipient parties must never exceed the number of inputs in any given transaction; i.e. if you intend to pay to three independent parties, you must provide the transaction with at least three inputs, so each can provide for a filter prefix and public key for one of your recipients.
 
-***Anonymity set*** Anonymity set for suffix_size 0 is effectively all transactions with p2pkh outputs (TBD p2sh-multisig); with suffix_size > 0, it is reduced by a factor of 1/2^(suffix_size) at each step for the simplest case where all transactions have only one input. The set may be larger where transactions contain more inputs, up to ~ 700/2^(suffix_size) in the worst case; for most usecases, though, wallets .
+***Anonymity set*** Anonymity set for prefix_size 0 is effectively all transactions with p2pkh outputs (TBD p2sh-multisig); with prefix_size > 0, it is reduced by a factor of 1/2^(prefix_size) at each step for the simplest case where all transactions have only one input. The set may be larger where transactions contain more inputs, up to ~ 700/2^(prefix_size) in the worst case; for most usecases, though, wallets .
 
-***Upper limit of scalability at recovery*** At very large blocksizes, the maximum suffix length permitted by the spec is 4 bytes, or about a 1/4-billion filter; for a Terabyte sized blocks, this will mean the client needs to examine about 36kB of data per day of recovery in the minimum case, more for average number of inputs per transaction above 1 - up to about 25MB/day in the worst case where the chain is entirely filled with 100kB, 700-input consolidations. Unless the disparity between client and server technologies change radically, this should be adequate for the forseeable future.
+***Upper limit of scalability at recovery*** At very large blocksizes, the maximum prefix length possible by the spec is 2 bytes, or about a 1/65536 filter; for a full 128MB sized block, this will mean the client needs to examine about 281kB of data per day of recovery in the minimum case, more for average number of inputs per transaction above 1 - up to about 196MB/day in the worst case where the chain is entirely filled with 100kB, 700-input consolidations. Unless the disparity between client and server technologies change radically, this should be adequate for the forseeable future.
 
-***DoS via multiple inputs*** Since one transaction can map to multiple suffixes via its multiple inputs, it would seem possible to increase download burden for onchain direct users, as well as offchain users recovering from seed, by posting very large transactions with many inputs each with different suffixes. However, such a scheme will at most be able to amplify the attack of a 100kB transaction against 700 suffixes, which is likely insufficient to be a serious concern for most situations.
+Note that for current versions the prefix length is limited to 16 bits, or 1/65536, which should be comfortable as described. As the chain grows even bigger, the prefix can be made longer to accomodate more filtering, at a cost of more computing power needed from senders. 
+
+***DoS via multiple inputs*** Since one transaction can map to multiple prefixes via its multiple inputs, it would seem possible to increase download burden for onchain direct users, as well as offchain users recovering from seed, by posting very large transactions with many inputs each with different prefixes. However, such a scheme will at most be able to amplify the attack of a 100kB transaction against 700 prefixes, which is likely insufficient to be a serious concern for most situations.
 
 ***Compatibility with coinjoin-based technologies*** While incoming addresses are only determined upon sending, coinjoin technologies such as Cashshuffle are quite agnostic to how receiving addresses are generated. The more important aspects of these technologies are that 1) addresses are not reused and 2) a ready list of change addresses can be generated from the same seed or master private key, both of which are compatible. Incoming coins can be marked for joins as they are received or recovered just as they can on HD addresses.
 
