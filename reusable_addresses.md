@@ -187,7 +187,7 @@ Common secret c = H(H(eQ) + s) = H(H(dP) + s), where H() is SHA256.
 
 Pay to addresses derived from public keys R'<sub>i</sub> = CKDpub(R,c,i), where CKDpub(K,C,i) is the public parent key -> public child key [derivation](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Public_parent_key_rarr_public_child_key) from BIP32, with the i<sup>th</sup> public key being the i<sup>th</sup> K, starting from i = 0.
 
-To recap, we use the first pubkey with a valid signature of the transaction's designated input, together with the scan key, to derive a shared secret via Diffie-Hellman. This shared secret is combined with the outpoint to obtain a unique scalar value for this payment that is used to tweak the spend key into unique ephemeral keys that is then used to derive addresses.
+To recap, we use the first pubkey with a valid signature of the transaction's designated input, together with the scan key, to derive a shared secret via Diffie-Hellman [(reference)](https://en.bitcoin.it/wiki/ECDH_address). This shared secret is combined with the outpoint to obtain a unique scalar value for this payment that is used to tweak the spend key into unique ephemeral keys that is then used to derive addresses.
 
 And then, use different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if prefix_size = 0). "Input" is a combination of the outpoint and scriptsig. The payment transaction is then constructed and ready to be relayed.
 
@@ -219,7 +219,7 @@ Common secret c = H(H(eQ) + s) = H(H(dP) + s)
 
 Pay to new P2SH addresses constructed from keys R1'<sub>i</sub> = CKDpub(R1,c,i), R2'<sub>i</sub> = CKDpub(R2,c,i) and R3'<sub>i</sub> = CKDpub(R3,c,i), with m of n specified in OP_CHECKMULTISIG script.
 
-Like the case of sending to P2PKH, the sender uses different nonces to sign the designated input until the last prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if prefix_size = 0). The payment transaction is then constructed and ready to be relayed.
+Like the case of sending to P2PKH, the sender uses different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if prefix_size = 0). The payment transaction is then constructed and ready to be relayed.
 
 **Relaying: Infrastructure needed**
 
