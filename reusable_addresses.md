@@ -35,7 +35,7 @@ This draft reusable address format, if widely adopted, seeks to provide a major 
 10. Inputs and outputs can be in any order, so trustless coin mixing can be flexibly accommodated. 
 
 11. Compatible with other OP_RETURN protocols, which form an important part of the Bitcoin Cash ecosystem. Incompatibility may lead to low adoption or fragmented anonymity sets.
-
+  
 12. For offline notification methods, the intermediary servers must not be able to compromise security of funds. 
 
 **Existing payment systems both in use and theoretical**
@@ -181,15 +181,19 @@ R = fG
 
 P = eG = first public key embedded in designated input with a valid signature
 
+e = private key paired with public key P
+
 s = integer derived from outpoint spent by designated input
 
-Common secret c = H(H(eQ) + s) = H(H(dP) + s), where H() is SHA256.
+The common secret c = H(H(e · Q) + s) = H(H(d · P) + s). Here, (·) is the multiplication of points over the secp256k1 elliptic curve, and (+ s) is normal arithmetic as part of this derivation function where H() is SHA-256.   
 
 Pay to addresses derived from public keys R'<sub>i</sub> = CKDpub(R,c,i), where CKDpub(K,C,i) is the public parent key -> public child key [derivation](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Public_parent_key_rarr_public_child_key) from BIP32, with the i<sup>th</sup> public key being the i<sup>th</sup> K, starting from i = 0.
 
-To recap, we use the first pubkey with a valid signature of the transaction's designated input, together with the scan key, to derive a shared secret via Diffie-Hellman [(reference)](https://en.bitcoin.it/wiki/ECDH_address). This shared secret is combined with the outpoint to obtain a unique scalar value for this payment that is used to tweak the spend key into unique ephemeral keys that is then used to derive addresses.
+To recap, we use the first pubkey with a valid signature of the transaction's designated input, together with the scan key, to derive a shared secret via Elliptic-curve Diffie–Hellman [(reference)](https://en.bitcoin.it/wiki/ECDH_address). This shared secret is combined with the outpoint to obtain a unique scalar value for this payment that is used to tweak the spend key into unique ephemeral keys that is then used to derive addresses.
 
-And then, use different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if prefix_size = 0). "Input" is a combination of the outpoint and scriptsig. The payment transaction is then constructed and ready to be relayed.
+Grinding the prefix is accomplished by using different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if prefix_size = 0). "Input" is a combination of the outpoint and scriptsig. The payment transaction is then constructed and ready to be relayed.
+
+Since bitcoin transactions do not have explicit nonces (unlike blockheaders), the nonce in this case is the "k" value used in creating the transaction signature.  Wallets that already use random "k" can simply keep re-selecting random values as the grinding process.  For wallets that have implemented RFC6979, a nonce can be concatenated to the message (normally the transaction components) that is passed into the function, thus generating a different "k" value while retaining the security properties of the signature generation procedure. 
 
 **Generating a transaction to payment code (P2SH-Multisig)**
 
@@ -290,4 +294,3 @@ Note that for current versions the prefix length is limited to 16 bits, or 1/655
 ***DoS via multiple inputs*** Since one transaction can map to multiple prefixes via its multiple inputs, it would seem possible to increase download burden for onchain direct users, as well as offchain users recovering from seed, by posting very large transactions with many inputs each with different prefixes. However, such a scheme will at most be able to amplify the attack of a 100kB transaction against 700 prefixes, which is likely insufficient to be a serious concern for most situations.
 
 ***Compatibility with coinjoin-based technologies*** While incoming addresses are only determined upon sending, coinjoin technologies such as Cashshuffle are quite agnostic to how receiving addresses are generated. The more important aspects of these technologies are that 1) addresses are not reused and 2) a ready list of change addresses can be generated from the same seed or master private key, both of which are compatible. Incoming coins can be marked for joins as they are received or recovered just as they can on HD addresses.
-
