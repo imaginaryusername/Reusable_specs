@@ -10,11 +10,14 @@ v0.4, with change from signature to input hash for filtering suffix
 
 **Problem statement**
 
-Most of the Bitcoin Cash ecosystem today runs on payments to straight addresses that are hashes of public keys, whether in simple P2PKH or scripted P2SH. Addresses are pseudonymous, and can provide a good - though imperfect - level of privacy if the receiver uses a fresh address to transact every time. This, however, presents a major problem in that users have to make major compromises between usability, privacy, security, recoverability and trustlessness.
+Most of the Bitcoin Cash ecosystem today runs on payments to straight addresses that are hashes of public keys, whether in simple P2PKH or scripted P2SH. Addresses are pseudonymous, and can provide a good - though imperfect - level of privacy if the receiver uses a fresh address to transact every time. Despite the existence or proposal of various alias/handle systems, there still exists a major problem in that users have to make compromises between usability, privacy, security, recoverability and trustlessness.
+
+**Solution**
+
+We propose a new alias system that would allow senders to generate a fresh address for a recipient. The communication to the recipient about the transaction's existence can happen on-chain, without using OP_RETURN.  This is accomplished by combining the Elliptic-curve Diffie-Helman properties in bitcoin with a simple grinding system, resulting in a byte-prefix that can hide transactions within an acceptable anonymity set. 
 
 This draft reusable address format, if widely adopted, seeks to provide a major improvement over existing systems in terms of net gain in all five areas, as well as more flexibility in choosing desirable compromises depending on usecases under one common format.
-
-**Solution 
+ 
 
 ## Design Discussion
 
