@@ -6,7 +6,7 @@ v0.4, with change from signature to input hash for filtering suffix
 
 @im_uname, with material from Mark Lundeberg, plus discussion with Chris Pacia, Amaury Séchet, Shammah Chancellor, Jonathan Silverblood and Josh Ellithorpe. Additional editing from freetrader and emergent_reasons.
 
-## Introduction
+# Introduction
 
 **Problem statement**
 
@@ -18,7 +18,10 @@ We propose a new alias system that would allow senders to generate a fresh addre
 
 This draft reusable address format, if widely adopted, seeks to provide a major improvement over existing systems in terms of net gain in all five areas, as well as more flexibility in choosing desirable compromises depending on usecases under one common format.
 
-# Requirements
+# Design Discussion
+
+
+## Requirements
 
 1. From only the paycode, sender can generate addresses that are detectable and spendable by the recipient.
 
@@ -44,7 +47,6 @@ This draft reusable address format, if widely adopted, seeks to provide a major 
   
 12. For offline notification methods, the intermediary servers must not be able to compromise security of funds. 
 
-# Design Discussion
 
 ## Existing payment systems both in use and theoretical
 
