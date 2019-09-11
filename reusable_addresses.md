@@ -207,7 +207,7 @@ Grinding the prefix is accomplished by using different nonces to sign the design
 
 Since bitcoin transactions do not have explicit nonces (unlike blockheaders), the nonce in this case is the "k" value used in creating the transaction signature.  Wallets that already use random "k" can simply keep re-selecting random values as the grinding process.  For wallets that have implemented RFC6979, a nonce can be concatenated to the message (normally the transaction components) that is passed into the function, thus generating a different "k" value while retaining the security properties of the signature generation procedure. 
 
-**Generating a transaction to payment code (P2SH-Multisig)**
+## Generating a transaction to payment code (P2SH-Multisig) 
 
 In the case of paying from P2PKH, P below is also the public key of the designated input. In the case of paying from P2SH-multisig, it is the first public key with a valid signature.
 
@@ -237,7 +237,7 @@ Pay to new P2SH addresses constructed from keys R1'<sub>i</sub> = CKDpub(R1,c,i)
 
 Like the case of sending to P2PKH, the sender uses different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if prefix_size = 0). The payment transaction is then constructed and ready to be relayed.
 
-**Relaying: Infrastructure needed**
+## Relaying: Infrastructure needed
 
 There are two methods of receiving: ***Offchain communications***, which saves on bandwidth but entrusts privacy to relay and retention servers, and ***onchain direct sending***, which is trustless on privacy but requires more bandwidth. We describe a single type of server required for both types, as well as two additional types required to make use of the offchain communications method:
 
@@ -247,11 +247,11 @@ There are two methods of receiving: ***Offchain communications***, which saves o
 
 3. ***Retention servers***: (Optional) This type of server retains transaction information for offline clients, and can be permissioned while allowing significant innovation and profit models at scale. Entrusted with client scan keys, retention servers connect to relay servers for their clients, then retrieve, decrypt and broadcast transactions for them. They are also responsible for retaining txid information for easy retrieval when client reconnects. Operators of Retention Servers can be expected to also operate their own Ephemeral Relays federated with other operators. An example that takes advantage of CashAccounts can be found at cashaccounts_retention.md.
 
-**Sending: Onchain direct sending**
+## Sending: Onchain direct sending
 
 After a transaction is generated, if the sending wallet detects the version allows onchain direct sending, it can simply broadcast the transaction to the Bitcoin Cash network and let it be mined. No notification to the recipient is needed.
 
-**Receiving: Onchain direct**
+## Receiving: Onchain direct
 
 If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions where at least one of the inputs has double-sha256 that match his payment code's prefix since he was last online. This will cost bandwidth that is approximately 1/256 of downloading the full blockchain (in the case prefix length = 8 bits; recovery servers may choose to deny excessively short prefix lengths), and less if longer prefix length is specified.
 
@@ -259,13 +259,13 @@ Upon receiving subscribed transactions, the wallet can then attempt, for each in
 
 Upon obtaining transactions filtered by the scan_privkey, the receiving wallet then stores it locally and assign a spending keypairs R'<sub>i</sub> and h<sub>i</sub> = [CKDpriv](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Private_parent_key_rarr_private_child_key)(f,c,i) to it. Funds are now available to be spent.
 
-**Sending: Offchain communications**
+## Sending: Offchain communications
 
 (Optional) If the paycode specifies offchain communications via setting the version byte and does not specify additional relay methods, the sending wallet shall attempt to relay through Ephemeral Relay servers. The constructed transaction shall first be encrypted with the payment code's scan pubkey, using a common ECDSA-based scheme such as [electrum-ECIES](https://github.com/Electron-Cash/Electron-Cash/blob/master/lib/bitcoin.py#L690), then handed off to a relay server. The transaction is considered "Sent" when the sending wallet detects the same transaction being broadcasted by a retention server.
 
 To remain trustless against the possibility of relay or retention servers denying service, after a short timeout (e.g. 30 seconds), if the transaction is not detected, the sending wallet shall consider the broadcast failed and construct a "clawback" transaction that spends the same output to a new address she controls. This is to avoid the case where the trade is voided - recipient never sends goods or services to the sender - yet after some time the recipient broadcasts the transaction anyway, robbing the sender.
 
-**Receiving: Offchain communications**
+## Receiving: Offchain communications
 
 (Optional) A Retention Server, subscribing to Relays using a client's scan privkey, receives the encrypted transaction, then decrypts and broadcasts to the Bitcoin Cash network; invalid transactions can be discarded. The server then proceeds to store the relevant txids calculated from the broadcasted transaction for its clients until retrieved - retention time can vary depending on provider, from several weeks to indefinite depending on specific quality of service desired.
 
@@ -279,7 +279,7 @@ Depending on the specific setup, if a client suspects either server downtime, ma
 
 The scanning and filtering part shall work exactly like in P2PKH. Once the multisig parties have a filtered transaction ascertained by the scan_privkey, the receiving parties can then each assign public keys R1'<sub>i</sub>, R2'<sub>i</sub>... and private keys CKDpriv(f1,c,i), CKDpriv(f2,c,i)...to the i<sup>th</sup> outputs. With these keysets, the address can be spent from normally.
 
-**Expiration time**
+## Expiration time  
 
 Note: Expiry date is not expected to be relevant in the near term, so it's recommended that receiving wallets set it to zero when generating. Sending wallets are still recommended to implement it to remain compatible with possible future scalability and usability changes. 
 
@@ -291,7 +291,7 @@ When scanning, nodes or wallets can allow for a certain amount of buffer beyond 
 
 In addition to addressing scaling concerns, expiration also addresses another usecase complaint - that wallets once established will have to monitor addresses indefinitely, and that there is no clear indicator to a sender whether an address remains usable or not. Such a clear guide embedded in the address itself can serve these cases well and provide unambiguous dates beyond which recipient will be free from the burden of maintaining monitoring and keys.
 
-**Considerations**
+## Considerations 
 
 ***Malleability considerations*** While using input hash as the filtering mechanism has advantage in both flexibility and implementation simplicity, input hashes are third-party malleable if colluded with a miner via nonstandard transactions, via exploiting vulnerabilities fixed in Bitcoin Cash's scheduled November 2019 upgrade (MINIMALDATA for P2PKH and NULLDUMMY for P2SH). Even before the fix, these DoS vectors - note that an attacker cannot steal funds - are mitigated by the fact that an attacker cannot easily pinpoint any given recipient's transaction. 
 
