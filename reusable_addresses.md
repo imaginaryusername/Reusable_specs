@@ -18,7 +18,7 @@ We propose a new alias system that would allow senders to generate a fresh addre
 
 This draft reusable address format, if widely adopted, seeks to provide a major improvement over existing systems in terms of net gain in all five areas, as well as more flexibility in choosing desirable compromises depending on usecases under one common format.
 
-# Design Discussion
+# Part I: Design Discussion
 
 
 ## Requirements
@@ -114,7 +114,7 @@ Security: None of the servers, even "trusted" retention servers, have the abilit
 
 Optional retirement: Ability for addresses to "renew" by expiring and republishing with adjusted resource usage after some period. Also useful for addresses where the recipient intends to stop monitoring after a period of time for other reasons. (REQ-6 related)
 
-# Proposal Details
+# Part II: Proposal Details
 
 ## Paycode format 
 
