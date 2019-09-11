@@ -1,4 +1,4 @@
-##BCH Reusable Address Proposal##
+# BCH Reusable Address Proposal
 
 BIP-???
 
@@ -6,11 +6,17 @@ v0.4, with change from signature to input hash for filtering suffix
 
 @im_uname, with material from Mark Lundeberg, plus discussion with Chris Pacia, Amaury Séchet, Shammah Chancellor, Jonathan Silverblood and Josh Ellithorpe. Additional editing from freetrader and emergent_reasons.
 
+## Introduction
+
 **Problem statement**
 
 Most of the Bitcoin Cash ecosystem today runs on payments to straight addresses that are hashes of public keys, whether in simple P2PKH or scripted P2SH. Addresses are pseudonymous, and can provide a good - though imperfect - level of privacy if the receiver uses a fresh address to transact every time. This, however, presents a major problem in that users have to make major compromises between usability, privacy, security, recoverability and trustlessness.
 
 This draft reusable address format, if widely adopted, seeks to provide a major improvement over existing systems in terms of net gain in all five areas, as well as more flexibility in choosing desirable compromises depending on usecases under one common format.
+
+**Solution 
+
+## Design Discussion
 
 **Requirements**
 
