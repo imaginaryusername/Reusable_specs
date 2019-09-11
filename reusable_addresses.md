@@ -14,7 +14,7 @@ Most of the Bitcoin Cash ecosystem today runs on payments to straight addresses 
 
 **Solution**
 
-We propose a new alias system that would allow senders to generate a fresh address for any recipient with a handle. Existence of the transaction happens on-chain --actually embedded in the transaction itself, without using OP_RETURN.  This is accomplished by combining the Elliptic-curve Diffie-Helman properties of bitcoin keys with a simple grinding system, resulting in a byte-prefix that can be found by scanning while also hiding within an acceptable anonymity set. 
+We propose a new alias system that would allow senders to generate a fresh address for any recipient with a handle. Communicating the existence of the transaction happens on-chain --actually embedded in the transaction itself, without using OP_RETURN.  This is accomplished by combining the Elliptic-curve Diffie-Helman properties of bitcoin keys with a simple grinding system, resulting in a byte-prefix that can be found by scanning while also hiding within an acceptable anonymity set. 
 
 This draft reusable address format, if widely adopted, seeks to provide a major improvement over existing systems in terms of net gain in all five areas, as well as more flexibility in choosing desirable compromises depending on usecases under one common format.
 
