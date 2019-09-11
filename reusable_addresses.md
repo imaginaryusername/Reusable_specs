@@ -48,7 +48,7 @@ This draft reusable address format, if widely adopted, seeks to provide a major 
 12. For offline notification methods, the intermediary servers must not be able to compromise security of funds. 
 
 
-## Existing payment systems both in use and theoretical
+## Existing payment systems both in use and theoretical 
 
 ***Simple HD wallets***
 
@@ -90,7 +90,7 @@ However, BIP-Stealth is still not ideal for several reasons:
 
 3. Flexibility in scaling: While BIP-Stealth does provide some flexibility in anonymity sets via adjusting prefix lengths, it does not provide means for low-bandwidth/trusted-privacy alternatives in offchain notification, nor does it provide for an expiry notice for clients who might want to update the address for scalability or privacy reasons periodically.
 
-**Highlights of features in this proposal**
+## Highlights of features in this proposal 
 
 Usability: Sender does not require any additional information aside from the paycode. (REQ-1)
 
@@ -114,7 +114,9 @@ Security: None of the servers, even "trusted" retention servers, have the abilit
 
 Optional retirement: Ability for addresses to "renew" by expiring and republishing with adjusted resource usage after some period. Also useful for addresses where the recipient intends to stop monitoring after a period of time for other reasons. (REQ-6 related)
 
-**Paycode format**
+# Proposal Details
+
+## Paycode format 
 
 For a recipient who intends to receive to a p2pkh addresses, encode the following in base32 using the same character set as cashaddr:
 
@@ -145,7 +147,7 @@ For a recipient who intends to receive to a p2sh-multisig addresses, encode the 
 
 The payment code shall be prefixed with `paycode:`, and can be optionally suffixed with offchain communications networks it supports in URI, e.g. `?xmpp=johndoe@something.org&matrix=@john123:something.com`. If no additional suffix is detected, the default offchain relay method, a necessity for version 2 and 4, is Ephemeral Relay service (see below).
 
-**Private key format**
+## Private key format 
 
 For the easy facilitation of paper wallets and inter-wallet transfers, the scan private key shall begin with "rpriv", the spend pubkey "spriv", followed each by these fields encoded in base32 using the same character set as cashaddr: 
 
@@ -157,7 +159,7 @@ For the easy facilitation of paper wallets and inter-wallet transfers, the scan 
 | 33 | privkey | char | 256-bit ECDSA/Schnorr private key |
 | 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
-**Paycode creation from two keypairs (P2PKH)**
+## Paycode creation from two keypairs (P2PKH) 
 
 Obtain two ECDSA/Schnorr keypairs from a wallet, and designate one as the "scanning" pubkey and the other as the "spending" pubkey.
 
@@ -167,7 +169,7 @@ Any common-secret-derived keypairs detected from incoming payments are additiona
 
 The multisig m-of-n parties do not keep transaction scanning privacy from each other, and must agree on a common scanning keypair. They can subsequently submit one ECDSA/Schnorr spending pubkey each, and set up the paycode using the n+1 public keys. The expiry date should be set to 0 to remain disabled.
 
-**Generating a transaction to payment code (P2PKH)**
+## Generating a transaction to payment code (P2PKH) 
 
 Sender's wallet shall first check the expiry time embedded in the paycode is at least one week ahead of local clock (skip if expiry time is 0). If expiry time is more than a week ahead, proceed.
 
