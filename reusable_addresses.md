@@ -205,7 +205,9 @@ To recap, we use the first pubkey with a valid signature of the transaction's de
 
 Grinding the prefix is accomplished by using different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if prefix_size = 0). "Input" is a combination of the outpoint and scriptsig. The payment transaction is then constructed and ready to be relayed.
 
-Since bitcoin transactions do not have explicit nonces (unlike blockheaders), the nonce in this case is the "k" value used in creating the transaction signature.  Wallets that already use random "k" can simply keep re-selecting random values as the grinding process.  For wallets that have implemented RFC6979, a nonce can be concatenated to the message (normally the transaction components) that is passed into the function, thus generating a different "k" value while retaining the security properties of the signature generation procedure. 
+Since bitcoin transactions do not have explicit nonces (unlike blockheaders), the nonce in this case is the random integer "k" value used in creating the transaction signature.  Wallets that already use random "k" can simply keep re-selecting random values as the grinding process.  
+
+Repeatedly invoking random number generators in a hot wallet may not be desirable for many; for wallets that have implemented RFC6979 for deterministic signatures, the desired prefix can be concatenated to the message (normally the transaction components) that is passed into the function, thus grinding for k for desired signatures while retaining determinism - the same message, private key and desired prefix will always produce the same signature. 
 
 ## Generating a transaction to payment code (P2SH-Multisig) 
 
