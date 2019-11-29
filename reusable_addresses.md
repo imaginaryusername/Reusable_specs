@@ -122,8 +122,8 @@ For a recipient who intends to receive to a p2pkh addresses, encode the followin
 
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
-| 1 | version | uint8 | paycode version byte; 1 and 2 for p2pkh, 2 to force offline-communication only. |
-| 1 | prefix_size | uint8 | length of the filtering prefix desired in <= 16 bits for versions 1,2,3,4; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
+| 1 | version | uint8 | paycode version byte; 1 and 2 for p2pkh (mainnet), 5 and 6 for p2pkh (testnet), among them 2 and 6 to force offline-communication only. |
+| 1 | prefix_size | uint8 | length of the filtering prefix desired, 0, 4, 8, 12 or 16 bits for versions 1 through 8 ; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 33 | scan_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive common secret |
 | 33 | spend_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive payto addresses when combined with common secret |
 | 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry. Use 0 for versions 1,2,3,4. |
@@ -133,8 +133,8 @@ For a recipient who intends to receive to a p2sh-multisig addresses, encode the 
 
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
-| 1 | version | uint8 | paycode version byte; 3 and 4 for p2sh-multisig. 4 to force offline-communication only. |
-| 1 | prefix_size | uint8 | length of the filtering prefix desired in <= 16 bits for versions 1,2,3,4; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
+| 1 | version | uint8 | paycode version byte; 3 and 4 for p2sh-multisig (mainnet), 7 and 8 for p2sh-multisig (testnet), among them 4 and 8 to force offline-communication only. |
+| 1 | prefix_size | uint8 | length of the filtering prefix desired, 0, 4, 8, 12 or 16 bits for versions 1 through 8 ; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 4 bits | multisig_setup_m | uint4 | instruction on constructing the multisig m-of-n to be paid to. m parties who can recover funds. m > 1, m <= n |
 | 4 bits | multisig_setup_n | uint4 | instruction on constructing the multisig m-of-n to be paid to. n parties total. n > 1, m <= n |
 | 33 | scan_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive common secret |
@@ -145,7 +145,7 @@ For a recipient who intends to receive to a p2sh-multisig addresses, encode the 
 | 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry. Use 0 for versions 1,2,3,4. |
 | 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
-The payment code shall be prefixed with `paycode:`, and can be optionally suffixed with offchain communications networks it supports in URI, e.g. `?xmpp=johndoe@something.org&matrix=@john123:something.com`. If no additional suffix is detected, the default offchain relay method, a necessity for version 2 and 4, is Ephemeral Relay service (see below).
+The payment code shall be prefixed with `paycode:`, and can be optionally suffixed with offchain communications networks it supports in URI, e.g. `?xmpp=johndoe@something.org&matrix=@john123:something.com`. If no additional suffix is detected, the default offchain relay method, a necessity for version 2, 4, 6 and 8, is Ephemeral Relay service (see below).
 
 ## Private key format 
 
@@ -155,7 +155,7 @@ For the easy facilitation of paper wallets and inter-wallet transfers, the scan 
 | -----------|:-----------:| ----------:|---------:|
 | 1 | version | uint8 | paycode version byte |
 | 1 | multisig_setup | uint4 + uint4 | instruction on constructing multig m-of-n (see above). 0 on both if P2PKH |
-| 1 | prefix_size | uint8 | length of the filtering prefix desired in <= 16 bits for versions 1,2,3,4; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
+| 1 | prefix_size | uint8 | length of the filtering prefix desired, 0, 4, 8, 12 or 16 bits for versions 1 through 8 ; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 33 | privkey | char | 256-bit ECDSA/Schnorr private key |
 | 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
