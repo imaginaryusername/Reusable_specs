@@ -2,7 +2,7 @@
 
 BIP-???
 
-v0.4, with change from signature to input hash for filtering suffix
+v0.4.1, tightening parameters after feedback
 
 @im_uname, with material from Mark Lundeberg, plus discussion with Chris Pacia, Amaury Séchet, Shammah Chancellor, Jonathan Silverblood and Josh Ellithorpe. Additional editing from Freetrader, Emergent_reasons and Jonald Fyookball.
 
