@@ -124,8 +124,8 @@ For a recipient who intends to receive to a p2pkh addresses, encode the followin
 | -----------|:-----------:| ----------:|---------:|
 | 1 | version | uint8 | paycode version byte; 1 and 2 for p2pkh (mainnet), 5 and 6 for p2pkh (testnet), among them 2 and 6 to force offline-communication only. |
 | 1 | prefix_size | uint8 | length of the filtering prefix desired, 0, 4, 8, 12 or 16 bits for versions 1 through 8 ; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
-| 33 | scan_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive common secret |
-| 33 | spend_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive payto addresses when combined with common secret |
+| 33 | scan_pubkey | char | 256-bit compressed ECDSA/Schnorr public key of the recipient used to derive common secret |
+| 33 | spend_pubkey | char | 256-bit compressed ECDSA/Schnorr public key of the recipient used to derive payto addresses when combined with common secret |
 | 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry. Use 0 for versions 1,2,3,4. |
 | 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
@@ -137,11 +137,11 @@ For a recipient who intends to receive to a p2sh-multisig addresses, encode the 
 | 1 | prefix_size | uint8 | length of the filtering prefix desired, 0, 4, 8, 12 or 16 bits for versions 1 through 8 ; 0 if no-filter for full-node or offline-communications. If used, recommend >= 8. |
 | 4 bits | multisig_setup_m | uint4 | instruction on constructing the multisig m-of-n to be paid to. m parties who can recover funds. m > 1, m <= n |
 | 4 bits | multisig_setup_n | uint4 | instruction on constructing the multisig m-of-n to be paid to. n parties total. n > 1, m <= n |
-| 33 | scan_pubkey | char | 256-bit ECDSA/Schnorr public key of the recipient used to derive common secret |
-| 33 | spend_pubkey1 | char | First ECDSA/Schnorr public key of the recipients |
-| 33 | spend_pubkey2 | char | Second ECDSA/Schnorr public key of the recipients |
+| 33 | scan_pubkey | char | 256-bit compressed ECDSA/Schnorr public key of the recipient used to derive common secret |
+| 33 | spend_pubkey1 | char | First compressed ECDSA/Schnorr public key of the recipients |
+| 33 | spend_pubkey2 | char | Second compressed ECDSA/Schnorr public key of the recipients |
 | ... | ... | ... | ... |
-| 33 | spend_pubkeyn | char | nth ECDSA/Schnorr public key of the recipients |
+| 33 | spend_pubkeyn | char | nth compressed ECDSA/Schnorr public key of the recipients |
 | 4 | expiry | uint32 | UNIX time beyond which the paycode should not be used. 0 for no expiry. Use 0 for versions 1,2,3,4. |
 | 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
@@ -203,11 +203,13 @@ Pay to addresses derived from public keys R'<sub>i</sub> = CKDpub(R,c,i), where 
 
 To recap, we use the first pubkey with a valid signature of the transaction's designated input, together with the scan key, to derive a shared secret via Elliptic-curve Diffie–Hellman [(reference)](https://en.bitcoin.it/wiki/ECDH_address). This shared secret is combined with the outpoint to obtain a unique scalar value for this payment that is used to tweak the spend key into unique ephemeral keys that is then used to derive addresses.
 
-Grinding the prefix is accomplished by using different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if prefix_size = 0). "Input" is a combination of the outpoint and scriptsig. The payment transaction is then constructed and ready to be relayed.
+Grinding the prefix is accomplished by using different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey, excluding the low-entropy first byte (skip if prefix_size = 0). "Input" is a combination of the outpoint and scriptsig. The payment transaction is then constructed and ready to be relayed.
 
 Since bitcoin transactions do not have explicit nonces (unlike blockheaders), the nonce in this case is the random integer "k" value used in creating the transaction signature.  Wallets that already use random "k" can simply keep re-selecting random values as the grinding process.  
 
-Repeatedly invoking random number generators in a hot wallet may not be desirable for many; for wallets that have implemented RFC6979 for deterministic signatures, the desired prefix can be concatenated to the message (normally the transaction components) that is passed into the function, thus grinding for k for desired signatures while retaining determinism - the same message, private key and desired prefix will always produce the same signature. 
+Repeatedly invoking random number generators in a hot wallet may not be desirable for many; for wallets that have implemented RFC6979 for deterministic signatures, the target paycode and nonce can be concatenated to the message (normally the transaction components) that is passed into the function via `ndata`, thus grinding for k for desired signatures while retaining determinism - the same message, private key and desired paycode will always produce the same signature. 
+
+For this purpose, we recommend that `ndata` be SHA256 hash of (version||paycode||nonce), where `version` is a 1 byte field and defaults to 1, `paycode` is the entirety of the target payment code including checksum, and `nonce` is a 32-byte field incremented starting at 0 for the grind.
 
 ## Generating a transaction to payment code (P2SH-Multisig) 
 
@@ -237,7 +239,7 @@ Common secret c = H(H(eQ) + s) = H(H(dP) + s)
 
 Pay to new P2SH addresses constructed from keys R1'<sub>i</sub> = CKDpub(R1,c,i), R2'<sub>i</sub> = CKDpub(R2,c,i) and R3'<sub>i</sub> = CKDpub(R3,c,i), with m of n specified in OP_CHECKMULTISIG script.
 
-Like the case of sending to P2PKH, the sender uses different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if prefix_size = 0). The payment transaction is then constructed and ready to be relayed.
+Like the case of sending to P2PKH, the sender uses different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey, excluding the low entropy first byte (skip if prefix_size = 0). The payment transaction is then constructed and ready to be relayed.
 
 ## Relaying: Infrastructure needed
 
@@ -255,7 +257,7 @@ After a transaction is generated, if the sending wallet detects the version allo
 
 ## Receiving: Onchain direct
 
-If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions where at least one of the inputs has double-sha256 that match his payment code's prefix since he was last online. This will cost bandwidth that is approximately 1/256 of downloading the full blockchain (in the case prefix length = 8 bits; recovery servers may choose to deny excessively short prefix lengths), and less if longer prefix length is specified.
+If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions where at least one of the inputs has double-sha256 that match his payment code's prefix, derived from prefix_length bits of his scanpubkey excluding the first low-entropy byte, since he was last online. This will cost bandwidth that is approximately 1/256 of downloading the full blockchain (in the case prefix length = 8 bits; recovery servers may choose to deny excessively short prefix lengths), and less if longer prefix length is specified.
 
 Upon receiving subscribed transactions, the wallet can then attempt, for each input where double-sha256 prefix matches its paycode and is one of the qualifying type (P2PKH or P2SH-multisig), to derive common secret c from scan_privkey, outpoint spent by that input and the first public key embedded in each input with a matching double-sha256 prefix. If no output addresses match R'<sub>0</sub> = CKDpub(R,cG,0), move on to another matching input; if no inputs are left in the transaction, discard the transaction. If an addresses R'<sub>0</sub> is found, another address R'<sub>1</sub> is derived from that input and attempted to match available outputs, until no more addresses can be found for a given i. This step can also be performed by specialized, trusted servers entrusted with scan privkeys.
 
