@@ -199,7 +199,7 @@ s = integer derived from outpoint spent by designated input
 
 The common secret c = H(H(e · Q) + s) = H(H(d · P) + s). Here, (·) is the multiplication of points over the secp256k1 elliptic curve, and (+ s) is normal arithmetic as part of this derivation function where H() is SHA-256.   
 
-Pay to addresses derived from public keys R'<sub>i</sub> = CKDpub(R,c,i), where CKDpub(K,C,i) is the public parent key -> public child key [derivation](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Public_parent_key_rarr_public_child_key) from BIP32, with the i<sup>th</sup> public key being the i<sup>th</sup> K, starting from i = 0.
+Pay to addresses derived from public keys R'<sub>i</sub> = CKDpub(R,c,i), where CKDpub(K,C,i) is the public parent key -> public child key [derivation](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Public_parent_key_rarr_public_child_key) from BIP32, with the i<sup>th</sup> public key being the i<sup>th</sup> K, starting from i = 0. Addresses should always be generated from compressed pubkeys.
 
 To recap, we use the first pubkey with a valid signature of the transaction's designated input, together with the scan key, to derive a shared secret via Elliptic-curve Diffie–Hellman [(reference)](https://en.bitcoin.it/wiki/ECDH_address). This shared secret is combined with the outpoint to obtain a unique scalar value for this payment that is used to tweak the spend key into unique ephemeral keys that is then used to derive addresses.
 
@@ -237,7 +237,7 @@ s = integer derived from outpoint spent by first input
 
 Common secret c = H(H(eQ) + s) = H(H(dP) + s)
 
-Pay to new P2SH addresses constructed from keys R1'<sub>i</sub> = CKDpub(R1,c,i), R2'<sub>i</sub> = CKDpub(R2,c,i) and R3'<sub>i</sub> = CKDpub(R3,c,i), with m of n specified in OP_CHECKMULTISIG script.
+Pay to new P2SH addresses constructed from keys R1'<sub>i</sub> = CKDpub(R1,c,i), R2'<sub>i</sub> = CKDpub(R2,c,i) and R3'<sub>i</sub> = CKDpub(R3,c,i), with m of n specified in OP_CHECKMULTISIG script. Addresses should always be generated from compressed pubkeys.
 
 Like the case of sending to P2PKH, the sender uses different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey, excluding the low entropy first byte (skip if prefix_size = 0). The payment transaction is then constructed and ready to be relayed.
 
@@ -259,7 +259,7 @@ After a transaction is generated, if the sending wallet detects the version allo
 
 If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions where at least one of the inputs has double-sha256 that match his payment code's prefix, derived from prefix_length bits of his scanpubkey excluding the first low-entropy byte, since he was last online. This will cost bandwidth that is approximately 1/256 of downloading the full blockchain (in the case prefix length = 8 bits; recovery servers may choose to deny excessively short prefix lengths), and less if longer prefix length is specified.
 
-Upon receiving subscribed transactions, the wallet can then attempt, for each input where double-sha256 prefix matches its paycode and is one of the qualifying type (P2PKH or P2SH-multisig), to derive common secret c from scan_privkey, outpoint spent by that input and the first public key embedded in each input with a matching double-sha256 prefix. If no output addresses match R'<sub>0</sub> = CKDpub(R,cG,0), move on to another matching input; if no inputs are left in the transaction, discard the transaction. If an addresses R'<sub>0</sub> is found, another address R'<sub>1</sub> is derived from that input and attempted to match available outputs, until no more addresses can be found for a given i. This step can also be performed by specialized, trusted servers entrusted with scan privkeys.
+Upon receiving subscribed transactions, the wallet can then attempt, for each input where double-sha256 prefix matches its paycode and is one of the qualifying type (P2PKH or P2SH-multisig), to derive common secret c from scan_privkey, outpoint spent by that input and the first public key embedded in each input with a matching double-sha256 prefix. If no output addresses match the address generated from R'<sub>0</sub> = CKDpub(R,cG,0), move on to another matching input; if no inputs are left in the transaction, discard the transaction. If an addresses R'<sub>0</sub> is found, another address R'<sub>1</sub> is derived from that input and attempted to match available outputs, until no more addresses can be found for a given i. This step can also be performed by specialized, trusted servers entrusted with scan privkeys.
 
 Upon obtaining transactions filtered by the scan_privkey, the receiving wallet then stores it locally and assign a spending keypairs R'<sub>i</sub> and h<sub>i</sub> = [CKDpriv](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Private_parent_key_rarr_private_child_key)(f,c,i) to it. Funds are now available to be spent.
 
