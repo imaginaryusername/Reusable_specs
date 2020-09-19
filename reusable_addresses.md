@@ -2,7 +2,7 @@
 
 BIP-???
 
-v0.4.2, limit number of inputs
+v0.4.3, further limit number of inputs
 
 @im_uname, with material from Mark Lundeberg, plus discussion with Chris Pacia, Amaury Séchet, Shammah Chancellor, Jonathan Silverblood and Josh Ellithorpe. Additional editing from Freetrader, Emergent_reasons and Jonald Fyookball.
 
@@ -173,7 +173,7 @@ The multisig m-of-n parties do not keep transaction scanning privacy from each o
 
 Sender's wallet shall first check the expiry time embedded in the paycode is at least one week ahead of local clock (skip if expiry time is 0). If expiry time is more than a week ahead, proceed.
 
-Sender's wallet shall determine the outpoints she wants to spend from, and determine which input's public key  is to be used for deriving common secret. For a multi-input transaction whether from single or multiple senders, that designated input should be randomly determined, but limited to within the first 100 inputs. Note that multiple recipients can be included in a single transaction, and each recipient address are free to either be derived from public keys in different designated inputs or the same input.
+Sender's wallet shall determine the outpoints she wants to spend from, and determine which input's public key  is to be used for deriving common secret. For a multi-input transaction whether from single or multiple senders, that designated input should be randomly determined, but limited to within the first 30 inputs. Note that multiple recipients can be included in a single transaction, and each recipient address are free to either be derived from public keys in different designated inputs or the same input.
 
 In the case the designated input is P2PKH, P below is simply its embedded public key. In the case of designating P2SH-multisig, it is the first public key with a valid signature within that input.
 
@@ -259,7 +259,7 @@ After a transaction is generated, if the sending wallet detects the version allo
 
 If onchain direct sending is used, receiving is relatively straightforward. The recipient shall connect to a Recovery Server and attempt to download all transactions where at least one of the inputs has double-sha256 that match his payment code's prefix, derived from prefix_length bits of his scanpubkey excluding the first low-entropy byte, since he was last online. This will cost bandwidth that is approximately 1/256 of downloading the full blockchain (in the case prefix length = 8 bits; recovery servers may choose to deny excessively short prefix lengths), and less if longer prefix length is specified.
 
-Upon receiving subscribed transactions, the wallet can then attempt, for each input where double-sha256 prefix matches its paycode and is one of the qualifying type (P2PKH or P2SH-multisig), to derive common secret c from scan_privkey, outpoint spent by that input and the first public key embedded in each input with a matching double-sha256 prefix. If no output addresses match the address generated from R'<sub>0</sub> = CKDpub(R,cG,0), move on to the next matching input within limit of the first 100 inputs; if no inputs are left in the transaction, discard the transaction. If an addresses R'<sub>0</sub> is found, another address R'<sub>1</sub> is derived from that input and attempted to match available outputs, until no more addresses can be found for a given i. This step can also be performed by specialized, trusted servers entrusted with scan privkeys.
+Upon receiving subscribed transactions, the wallet can then attempt, for each input where double-sha256 prefix matches its paycode and is one of the qualifying type (P2PKH or P2SH-multisig), to derive common secret c from scan_privkey, outpoint spent by that input and the first public key embedded in each input with a matching double-sha256 prefix. If no output addresses match the address generated from R'<sub>0</sub> = CKDpub(R,cG,0), move on to the next matching input within limit of the first 30 inputs; if no inputs are left in the transaction, discard the transaction. If an addresses R'<sub>0</sub> is found, another address R'<sub>1</sub> is derived from that input and attempted to match available outputs, until no more addresses can be found for a given i. This step can also be performed by specialized, trusted servers entrusted with scan privkeys.
 
 Upon obtaining transactions filtered by the scan_privkey, the receiving wallet then stores it locally and assign a spending keypairs R'<sub>i</sub> and h<sub>i</sub> = [CKDpriv](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Private_parent_key_rarr_private_child_key)(f,c,i) to it. Funds are now available to be spent.
 
@@ -281,7 +281,7 @@ Depending on the specific setup, if a client suspects either server downtime, ma
 
 **Receiving to P2SH-Multisig**
 
-The scanning and filtering part shall work exactly like in P2PKH. Once the multisig parties have a filtered transaction ascertained by the scan_privkey, the receiving parties can then each assign public keys R1'<sub>i</sub>, R2'<sub>i</sub>... and private keys CKDpriv(f1,c,i), CKDpriv(f2,c,i)...to the i<sup>th</sup> outputs within the limit of 100. With these keysets, the address can be spent from normally.
+The scanning and filtering part shall work exactly like in P2PKH. Once the multisig parties have a filtered transaction ascertained by the scan_privkey, the receiving parties can then each assign public keys R1'<sub>i</sub>, R2'<sub>i</sub>... and private keys CKDpriv(f1,c,i), CKDpriv(f2,c,i)...to the i<sup>th</sup> outputs within the limit of 30. With these keysets, the address can be spent from normally.
 
 ## Expiration time  
 
@@ -299,14 +299,14 @@ In addition to addressing scaling concerns, expiration also addresses another us
 
 ***Malleability considerations*** While using input hash as the filtering mechanism has advantage in both flexibility and implementation simplicity, input hashes are third-party malleable if colluded with a miner via nonstandard transactions, via exploiting vulnerabilities fixed in Bitcoin Cash's scheduled November 2019 upgrade (MINIMALDATA for P2PKH and NULLDUMMY for P2SH). Even before the fix, these DoS vectors - note that an attacker cannot steal funds - are mitigated by the fact that an attacker cannot easily pinpoint any given recipient's transaction. 
 
-***Limits of party combination*** The design allows multiparty inputs and multiparty payouts, with each recipient party capable of deriving multiple addresses for maximum privacy. However, the number of recipient parties must never exceed the number of inputs nor the 100-input limit in any given transaction; i.e. if you intend to pay to three independent parties, you must provide the transaction with at least three inputs, so each can provide for a filter prefix and public key for one of your recipients.
+***Limits of party combination*** The design allows multiparty inputs and multiparty payouts, with each recipient party capable of deriving multiple addresses for maximum privacy. However, the number of recipient parties must never exceed the number of inputs nor the 30-input limit in any given transaction; i.e. if you intend to pay to three independent parties, you must provide the transaction with at least three inputs, so each can provide for a filter prefix and public key for one of your recipients.
 
 ***Anonymity set*** Anonymity set for prefix_size 0 is effectively all transactions with p2pkh outputs (TBD p2sh-multisig); with prefix_size > 0, it is reduced by a factor of 1/2^(prefix_size) at each step for the simplest case where all transactions have only one input. The set may be larger where transactions contain more inputs, up to ~ 700/2^(prefix_size) in the worst case; for most usecases, though, wallets .
 
-***Upper limit of scalability at recovery*** At very large blocksizes, the maximum prefix length possible by the spec is 2 bytes, or about a 1/65536 filter; for a full 128MB sized block, this will mean the client needs to examine about 281kB of data per day of recovery in the minimum case, more for average number of inputs per transaction above 1 - up to about 28MB/day in the worst case where the chain is entirely filled with ~14kB, 100-input consolidations. Unless the disparity between client and server technologies change radically, this should be adequate for the forseeable future.
+***Upper limit of scalability at recovery*** At very large blocksizes, the maximum prefix length possible by the spec is 2 bytes, or about a 1/65536 filter; for a full 128MB sized block, this will mean the client needs to examine about 281kB of data per day of recovery in the minimum case, more for average number of inputs per transaction above 1 - up to about 8.5MB/day in the worst case where the chain is entirely filled with ~4kB, 30-input consolidations. Unless the disparity between client and server technologies change radically, this should be adequate for the forseeable future.
 
 Note that for current versions the prefix length is limited to 16 bits, or 1/65536, which should be comfortable as described. As the chain grows even bigger, the prefix can be made longer to accomodate more filtering, at a cost of more computing power needed from senders. 
 
-***DoS via multiple inputs*** Since one transaction can map to multiple prefixes via its multiple inputs, it would seem possible to increase download burden for onchain direct users, as well as offchain users recovering from seed, by posting very large transactions with many inputs each with different prefixes. However, such a scheme will at most be able to amplify the attack of a 100kB transaction against 100 prefixes, which is likely insufficient to be a serious concern for most situations.
+***DoS via multiple inputs*** Since one transaction can map to multiple prefixes via its multiple inputs, it would seem possible to increase download burden for onchain direct users, as well as offchain users recovering from seed, by posting very large transactions with many inputs each with different prefixes. However, such a scheme will at most be able to amplify the attack of a 100kB transaction against 30 prefixes, which is likely insufficient to be a serious concern for most situations.
 
 ***Compatibility with coinjoin-based technologies*** While incoming addresses are only determined upon sending, coinjoin technologies such as Cashshuffle are quite agnostic to how receiving addresses are generated. The more important aspects of these technologies are that 1) addresses are not reused and 2) a ready list of change addresses can be generated from the same seed or master private key, both of which are compatible. Incoming coins can be marked for joins as they are received or recovered just as they can on HD addresses.
