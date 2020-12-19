@@ -14,7 +14,7 @@ Most of the Bitcoin Cash ecosystem today runs on payments to straight addresses 
 
 **Solution**
 
-We propose a new alias system that would allow senders to generate a fresh address for any recipient with a handle. Communicating the existence of the transaction happens on-chain --actually embedded in the transaction itself, without using OP_RETURN.  This is accomplished by combining the Elliptic-curve Diffie-Helman properties of bitcoin keys with a simple grinding system, resulting in a byte-prefix that can be found by scanning while also hiding within an acceptable anonymity set. 
+We propose a new alias system that would allow senders to generate a fresh address for any recipient with a handle. Communicating the existence of the transaction happens on-chain --actually embedded in the transaction itself, without using OP_RETURN.  This is accomplished by combining the Elliptic-curve Diffie-Helman properties of bitcoin keys with a simple grinding system, resulting in a byte-prefix that can be found by scanning while also hiding within an acceptable anonymity set.
 
 This draft reusable address format, if widely adopted, seeks to provide a major improvement over existing systems in terms of net gain in all five areas, as well as more flexibility in choosing desirable compromises depending on usecases under one common format.
 
@@ -39,16 +39,16 @@ This draft reusable address format, if widely adopted, seeks to provide a major 
 
 8. There must exist a practical way for the recipient to recover his funds from mnemonic seed backups without compromising security or privacy.
 
-9. Multisignature addresses must be supported for both sender and recipient. 
+9. Multisignature addresses must be supported for both sender and recipient.
 
-10. Inputs and outputs can be in any order, so trustless coin mixing can be flexibly accommodated. 
+10. Inputs and outputs can be in any order, so trustless coin mixing can be flexibly accommodated.
 
 11. Compatible with other OP_RETURN protocols, which form an important part of the Bitcoin Cash ecosystem. Incompatibility may lead to low adoption or fragmented anonymity sets.
-  
-12. For offline notification methods, the intermediary servers must not be able to compromise security of funds. 
+
+12. For offline notification methods, the intermediary servers must not be able to compromise security of funds.
 
 
-## Existing payment systems both in use and theoretical 
+## Existing payment systems both in use and theoretical
 
 ***Simple HD wallets***
 
@@ -90,7 +90,7 @@ However, BIP-Stealth is still not ideal for several reasons:
 
 3. Flexibility in scaling: While BIP-Stealth does provide some flexibility in anonymity sets via adjusting prefix lengths, it does not provide means for low-bandwidth/trusted-privacy alternatives in offchain notification, nor does it provide for an expiry notice for clients who might want to update the address for scalability or privacy reasons periodically.
 
-## Highlights of features in this proposal 
+## Highlights of features in this proposal
 
 Usability: Sender does not require any additional information aside from the paycode. (REQ-1)
 
@@ -116,7 +116,7 @@ Optional retirement: Ability for addresses to "renew" by expiring and republishi
 
 # Part II: Proposal Details
 
-## Paycode format 
+## Paycode format
 
 For a recipient who intends to receive to a p2pkh addresses, encode the following in base32 using the same character set as cashaddr:
 
@@ -147,9 +147,9 @@ For a recipient who intends to receive to a p2sh-multisig addresses, encode the 
 
 The payment code shall be prefixed with `paycode:`, and can be optionally suffixed with offchain communications networks it supports in URI, e.g. `?xmpp=johndoe@something.org&matrix=@john123:something.com`. If no additional suffix is detected, the default offchain relay method, a necessity for version 2, 4, 6 and 8, is Ephemeral Relay service (see below).
 
-## Private key format 
+## Private key format
 
-For the easy facilitation of paper wallets and inter-wallet transfers, the scan private key shall begin with "rpriv", the spend pubkey "spriv", followed each by these fields encoded in base32 using the same character set as cashaddr: 
+For the easy facilitation of paper wallets and inter-wallet transfers, the scan private key shall begin with "rpriv", the spend pubkey "spriv", followed each by these fields encoded in base32 using the same character set as cashaddr:
 
 | Field Size | Description | Data Type  | Comments |
 | -----------|:-----------:| ----------:|---------:|
@@ -159,7 +159,7 @@ For the easy facilitation of paper wallets and inter-wallet transfers, the scan 
 | 33 | privkey | char | 256-bit ECDSA/Schnorr private key |
 | 5 | checksum | char | checksum calculated the same way as [Cashaddr](https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md#bch). |
 
-## Paycode creation from two keypairs (P2PKH) 
+## Paycode creation from two keypairs (P2PKH)
 
 Obtain two ECDSA/Schnorr keypairs from a wallet, and designate one as the "scanning" pubkey and the other as the "spending" pubkey.
 
@@ -169,7 +169,7 @@ Any common-secret-derived keypairs detected from incoming payments are additiona
 
 The multisig m-of-n parties do not keep transaction scanning privacy from each other, and must agree on a common scanning keypair. They can subsequently submit one ECDSA/Schnorr spending pubkey each, and set up the paycode using the n+1 public keys. The expiry date should be set to 0 to remain disabled.
 
-## Generating a transaction to payment code (P2PKH) 
+## Generating a transaction to payment code (P2PKH)
 
 Sender's wallet shall first check the expiry time embedded in the paycode is at least one week ahead of local clock (skip if expiry time is 0). If expiry time is more than a week ahead, proceed.
 
@@ -197,7 +197,7 @@ e = private key paired with public key P
 
 s = integer derived from outpoint spent by designated input
 
-The common secret c = H(H(e · Q) + s) = H(H(d · P) + s). Here, (·) is the multiplication of points over the secp256k1 elliptic curve, and (+ s) is normal arithmetic as part of this derivation function where H() is SHA-256.   
+The common secret c = H(H(e · Q) + s) = H(H(d · P) + s). Here, (·) is the multiplication of points over the secp256k1 elliptic curve, and (+ s) is normal arithmetic as part of this derivation function where H() is SHA-256.
 
 Pay to addresses derived from public keys R'<sub>i</sub> = CKDpub(R,c,i), where CKDpub(K,C,i) is the public parent key -> public child key [derivation](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Public_parent_key_rarr_public_child_key) from BIP32, with the i<sup>th</sup> public key being the i<sup>th</sup> K, starting from i = 0. Addresses should always be generated from compressed pubkeys.
 
@@ -205,13 +205,13 @@ To recap, we use the first pubkey with a valid signature of the transaction's de
 
 Grinding the prefix is accomplished by using different nonces to sign the designated input until the first prefix_size bits of the double-sha256 of the designated input are shared with the scan_pubkey (skip if prefix_size = 0). "Input" is a combination of the outpoint and scriptsig. The payment transaction is then constructed and ready to be relayed.
 
-Since bitcoin transactions do not have explicit nonces (unlike blockheaders), the nonce in this case is the random integer "k" value used in creating the transaction signature.  Wallets that already use random "k" can simply keep re-selecting random values as the grinding process.  
+Since bitcoin transactions do not have explicit nonces (unlike blockheaders), the nonce in this case is the random integer "k" value used in creating the transaction signature.  Wallets that already use random "k" can simply keep re-selecting random values as the grinding process.
 
-Repeatedly invoking random number generators in a hot wallet may not be desirable for many; for wallets that have implemented RFC6979 for deterministic signatures, the target paycode and nonce can be concatenated to the message (normally the transaction components) that is passed into the function via `ndata`, thus grinding for k for desired signatures while retaining determinism - the same message, private key and desired paycode will always produce the same signature. 
+Repeatedly invoking random number generators in a hot wallet may not be desirable for many; for wallets that have implemented RFC6979 for deterministic signatures, the target paycode and nonce can be concatenated to the message (normally the transaction components) that is passed into the function via `ndata`, thus grinding for k for desired signatures while retaining determinism - the same message, private key and desired paycode will always produce the same signature.
 
 For this purpose, we recommend that `ndata` be SHA256 hash of (version||paycode||nonce), where `version` is a 1 byte field and defaults to 1, `paycode` is the entirety of the target payment code including checksum, and `nonce` is a 32-byte field incremented starting at 0 for the grind.
 
-## Generating a transaction to payment code (P2SH-Multisig) 
+## Generating a transaction to payment code (P2SH-Multisig)
 
 In the case of paying from P2PKH, P below is also the public key of the designated input. In the case of paying from P2SH-multisig, it is the first public key with a valid signature.
 
@@ -283,9 +283,9 @@ Depending on the specific setup, if a client suspects either server downtime, ma
 
 The scanning and filtering part shall work exactly like in P2PKH. Once the multisig parties have a filtered transaction ascertained by the scan_privkey, the receiving parties can then each assign public keys R1'<sub>i</sub>, R2'<sub>i</sub>... and private keys CKDpriv(f1,c,i), CKDpriv(f2,c,i)...to the i<sup>th</sup> outputs within the limit of 30. With these keysets, the address can be spent from normally.
 
-## Expiration time  
+## Expiration time
 
-Note: Expiry date is not expected to be relevant in the near term, so it's recommended that receiving wallets set it to zero when generating. Sending wallets are still recommended to implement it to remain compatible with possible future scalability and usability changes. 
+Note: Expiry date is not expected to be relevant in the near term, so it's recommended that receiving wallets set it to zero when generating. Sending wallets are still recommended to implement it to remain compatible with possible future scalability and usability changes.
 
 Whether it uses onchain direct sending or offchain communications, as long as the wallet remains compatible with seed recovery via recovery servers, it will require a fixed fraction of total Bitcoin Cash bandwidth for that purpose. While the consumption does not have to be latency sensitive in the context of a light wallet, it is vulnerable to long term total traffic fluctuation. If the prefix is too short while network traffic gets much higher, the wallet might have difficulty running as bandwidth requirement rises with network traffic. On the other hand, if the prefix is too long when network traffic is low, the wallet's privacy is degraded as its anonymity set shrinks, in addition to creating undue burden on sending wallets for grinding.
 
@@ -295,9 +295,9 @@ When scanning, nodes or wallets can allow for a certain amount of buffer beyond 
 
 In addition to addressing scaling concerns, expiration also addresses another usecase complaint - that wallets once established will have to monitor addresses indefinitely, and that there is no clear indicator to a sender whether an address remains usable or not. Such a clear guide embedded in the address itself can serve these cases well and provide unambiguous dates beyond which recipient will be free from the burden of maintaining monitoring and keys.
 
-## Considerations 
+## Considerations
 
-***Malleability considerations*** While using input hash as the filtering mechanism has advantage in both flexibility and implementation simplicity, input hashes are third-party malleable if colluded with a miner via nonstandard transactions, via exploiting vulnerabilities fixed in Bitcoin Cash's scheduled November 2019 upgrade (MINIMALDATA for P2PKH and NULLDUMMY for P2SH). Even before the fix, these DoS vectors - note that an attacker cannot steal funds - are mitigated by the fact that an attacker cannot easily pinpoint any given recipient's transaction. 
+***Malleability considerations*** While using input hash as the filtering mechanism has advantage in both flexibility and implementation simplicity, input hashes are third-party malleable if colluded with a miner via nonstandard transactions, via exploiting vulnerabilities fixed in Bitcoin Cash's scheduled November 2019 upgrade (MINIMALDATA for P2PKH and NULLDUMMY for P2SH). Even before the fix, these DoS vectors - note that an attacker cannot steal funds - are mitigated by the fact that an attacker cannot easily pinpoint any given recipient's transaction.
 
 ***Limits of party combination*** The design allows multiparty inputs and multiparty payouts, with each recipient party capable of deriving multiple addresses for maximum privacy. However, the number of recipient parties must never exceed the number of inputs nor the 30-input limit in any given transaction; i.e. if you intend to pay to three independent parties, you must provide the transaction with at least three inputs, so each can provide for a filter prefix and public key for one of your recipients.
 
@@ -305,7 +305,7 @@ In addition to addressing scaling concerns, expiration also addresses another us
 
 ***Upper limit of scalability at recovery*** At very large blocksizes, the maximum prefix length possible by the spec is 2 bytes, or about a 1/65536 filter; for a full 128MB sized block, this will mean the client needs to examine about 281kB of data per day of recovery in the minimum case, more for average number of inputs per transaction above 1 - up to about 8.5MB/day in the worst case where the chain is entirely filled with ~4kB, 30-input consolidations. Unless the disparity between client and server technologies change radically, this should be adequate for the forseeable future.
 
-Note that for current versions the prefix length is limited to 16 bits, or 1/65536, which should be comfortable as described. As the chain grows even bigger, the prefix can be made longer to accomodate more filtering, at a cost of more computing power needed from senders. 
+Note that for current versions the prefix length is limited to 16 bits, or 1/65536, which should be comfortable as described. As the chain grows even bigger, the prefix can be made longer to accomodate more filtering, at a cost of more computing power needed from senders.
 
 ***DoS via multiple inputs*** Since one transaction can map to multiple prefixes via its multiple inputs, it would seem possible to increase download burden for onchain direct users, as well as offchain users recovering from seed, by posting very large transactions with many inputs each with different prefixes. However, such a scheme will at most be able to amplify the attack of a 100kB transaction against 30 prefixes, which is likely insufficient to be a serious concern for most situations.
 
